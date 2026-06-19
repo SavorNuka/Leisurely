@@ -69,10 +69,18 @@ export interface Plan {
   updatedAt: string
 }
 
+export interface NoteReply {
+  id: string
+  text: string
+  createdAt: string
+}
+
 export interface Note {
   id: string
   text: string
   createdAt: string
+  likes: number
+  replies: NoteReply[]
 }
 
 export type PackingCategory = 'clothes' | 'toiletries' | 'documents' | 'kitchen' | 'misc'

@@ -126,6 +126,8 @@ export async function pullFromSupabase(userId: string): Promise<Partial<AppState
     id: r.id,
     text: r.text,
     createdAt: r.created_at,
+    likes: 0,
+    replies: [],
   }))
 
   const packingRes = await supabase

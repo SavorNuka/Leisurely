@@ -6,12 +6,10 @@ import { NotesPage } from './components/notes/NotesPage'
 import { PackingPage } from './components/packing/PackingPage'
 import { SettingsPage } from './components/settings/SettingsPage'
 import { AuthPage } from './components/auth/AuthPage'
-import { ShareImportBanner } from './components/ui/ShareImportBanner'
 
 export function App() {
   return (
     <BrowserRouter>
-      <ShareImportBanner />
       <AppShell>
         <Routes>
           <Route path="/" element={<Navigate to="/plan" replace />} />

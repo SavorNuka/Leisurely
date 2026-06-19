@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { Plan, Meal, GroceryItem, MealSlotKey, Note, PackingItem, PackingCategory, DietaryTag, AppState } from '../types'
+import type { Plan, Meal, GroceryItem, MealSlotKey, Note, NoteReply, PackingItem, PackingCategory, DietaryTag, AppState } from '../types'
 import { mergeDayPlans } from '../lib/dateUtils'
 import { aggregateIngredients } from '../lib/groceryAggregator'
 import { savePlan, saveMeals, saveGroceryList, saveNotes, savePackingList, clearPlanFromDB } from '../lib/db'
@@ -34,6 +34,9 @@ interface PlanStore extends AppState {
   // Note actions
   addNote: (text: string) => void
   removeNote: (id: string) => void
+  likeNote: (id: string) => void
+  addReply: (noteId: string, text: string) => void
+  removeReply: (noteId: string, replyId: string) => void
 
   // Packing actions
   addPackingItem: (text: string, category: PackingCategory) => void
@@ -162,12 +165,29 @@ export const usePlanStore = create<PlanStore>()(
     },
 
     addNote(text) {
-      const note: Note = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString() }
+      const note: Note = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), likes: 0, replies: [] }
       set((s) => ({ notes: [note, ...s.notes] }))
     },
 
     removeNote(id) {
       set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }))
+    },
+
+    likeNote(id) {
+      set((s) => ({ notes: s.notes.map((n) => n.id === id ? { ...n, likes: (n.likes ?? 0) + 1 } : n) }))
+    },
+
+    addReply(noteId, text) {
+      const reply: NoteReply = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString() }
+      set((s) => ({
+        notes: s.notes.map((n) => n.id === noteId ? { ...n, replies: [...(n.replies ?? []), reply] } : n)
+      }))
+    },
+
+    removeReply(noteId, replyId) {
+      set((s) => ({
+        notes: s.notes.map((n) => n.id === noteId ? { ...n, replies: (n.replies ?? []).filter((r) => r.id !== replyId) } : n)
+      }))
     },
 
     addPackingItem(text, category) {
@@ -202,7 +222,7 @@ export const usePlanStore = create<PlanStore>()(
         plan: state.plan ?? null,
         meals: state.meals ?? {},
         groceryList: state.groceryList ?? [],
-        notes: state.notes ?? [],
+        notes: (state.notes ?? []).map((n) => ({ ...n, likes: n.likes ?? 0, replies: n.replies ?? [] })),
         packingList: state.packingList ?? [],
       })
     },
