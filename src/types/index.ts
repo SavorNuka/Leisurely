@@ -75,9 +75,46 @@ export interface Note {
   createdAt: string
 }
 
+export type PackingCategory = 'clothes' | 'toiletries' | 'documents' | 'kitchen' | 'misc'
+
+export const PACKING_CATEGORY_LABELS: Record<PackingCategory, string> = {
+  clothes: 'Clothes',
+  toiletries: 'Toiletries',
+  documents: 'Documents',
+  kitchen: 'Kitchen & Food',
+  misc: 'Misc',
+}
+
+export const PACKING_CATEGORY_EMOJI: Record<PackingCategory, string> = {
+  clothes: '👕',
+  toiletries: '🧴',
+  documents: '📄',
+  kitchen: '🍳',
+  misc: '📦',
+}
+
+export interface PackingItem {
+  id: string
+  text: string
+  category: PackingCategory
+  packed: boolean
+  createdAt: string
+}
+
 export interface AppState {
   plan: Plan | null
   meals: Record<string, Meal>
   groceryList: GroceryItem[]
   notes: Note[]
+  packingList: PackingItem[]
+}
+
+// Recipe (from local JSON database)
+export interface Recipe {
+  id: string
+  name: string
+  description: string
+  servings: number
+  dietaryTags: DietaryTag[]
+  ingredients: Omit<GroceryItem, 'checked' | 'mealIds'>[]
 }

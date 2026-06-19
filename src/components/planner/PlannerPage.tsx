@@ -3,6 +3,7 @@ import { usePlanStore } from '../../stores/planStore'
 import { usePlan } from '../../hooks/usePlan'
 import { DateRangePicker } from './DateRangePicker'
 import { MealGrid } from './MealGrid'
+import { DietaryFilter } from './DietaryFilter'
 import { EmptyState } from '../ui/EmptyState'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
@@ -28,11 +29,7 @@ export function PlannerPage() {
             placeholder="e.g. Tuscany Summer 2026"
             onKeyDown={(e) => { if (e.key === 'Enter' && newName.trim()) createNewPlan(newName.trim()) }}
           />
-          <Button
-            variant="primary"
-            className="w-full justify-center"
-            onClick={() => createNewPlan(newName.trim() || 'My Trip')}
-          >
+          <Button variant="primary" className="w-full justify-center" onClick={() => createNewPlan(newName.trim() || 'My Trip')}>
             Start planning
           </Button>
         </div>
@@ -41,8 +38,9 @@ export function PlannerPage() {
   }
 
   return (
-    <div className="space-y-6 py-6">
+    <div className="space-y-4 py-6">
       <DateRangePicker />
+      <DietaryFilter />
       <MealGrid days={plan.days} />
     </div>
   )

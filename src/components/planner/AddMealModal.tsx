@@ -3,8 +3,9 @@ import { Modal } from '../ui/Modal'
 import { Input, Textarea } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { DietaryTagBadge } from './DietaryTagBadge'
+import { RecipeBrowser } from './RecipeBrowser'
 import { usePlanStore } from '../../stores/planStore'
-import { PRESET_DIETARY_TAGS, type DietaryTag, type Meal, type MealSlotKey, type GroceryItem } from '../../types'
+import { PRESET_DIETARY_TAGS, type DietaryTag, type Meal, type MealSlotKey, type GroceryItem, type Recipe } from '../../types'
 
 interface IngredientRow {
   id: string
@@ -31,6 +32,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
   const assignMealToSlot = usePlanStore((s) => s.assignMealToSlot)
   const regenerateGroceryList = usePlanStore((s) => s.regenerateGroceryList)
 
+  const [showRecipes, setShowRecipes] = useState(!editingMeal)
   const [name, setName] = useState(editingMeal?.name ?? '')
   const [notes, setNotes] = useState(editingMeal?.notes ?? '')
   const [servings, setServings] = useState(String(editingMeal?.servings ?? 2))
@@ -38,29 +40,34 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
   const [allergyInput, setAllergyInput] = useState('')
   const [ingredients, setIngredients] = useState<IngredientRow[]>(
     editingMeal?.ingredients?.length
-      ? editingMeal.ingredients.map((i) => ({
-          id: i.id,
-          name: i.name,
-          quantity: String(i.quantity),
-          unit: i.unit,
-        }))
+      ? editingMeal.ingredients.map((i) => ({ id: i.id, name: i.name, quantity: String(i.quantity), unit: i.unit }))
       : [emptyRow()]
   )
   const [nameError, setNameError] = useState('')
 
+  function applyRecipe(recipe: Recipe) {
+    setName(recipe.name)
+    setNotes(recipe.description)
+    setServings(String(recipe.servings))
+    setSelectedTags(recipe.dietaryTags)
+    setIngredients(recipe.ingredients.map((i) => ({
+      id: i.id,
+      name: i.name,
+      quantity: String(i.quantity),
+      unit: i.unit,
+    })))
+    setShowRecipes(false)
+  }
+
   function toggleTag(tag: DietaryTag) {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    )
+    setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])
   }
 
   function addAllergyTag() {
     const val = allergyInput.trim().toLowerCase()
     if (!val) return
     const tag: DietaryTag = `allergy:${val}`
-    if (!selectedTags.includes(tag)) {
-      setSelectedTags((prev) => [...prev, tag])
-    }
+    if (!selectedTags.includes(tag)) setSelectedTags((prev) => [...prev, tag])
     setAllergyInput('')
   }
 
@@ -78,10 +85,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!name.trim()) {
-      setNameError('Meal name is required')
-      return
-    }
+    if (!name.trim()) { setNameError('Meal name is required'); return }
     setNameError('')
 
     const parsedIngredients: GroceryItem[] = ingredients
@@ -96,13 +100,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
       }))
 
     if (editingMeal) {
-      updateMeal(editingMeal.id, {
-        name: name.trim(),
-        notes: notes.trim(),
-        servings: parseInt(servings) || 1,
-        dietaryTags: selectedTags,
-        ingredients: parsedIngredients,
-      })
+      updateMeal(editingMeal.id, { name: name.trim(), notes: notes.trim(), servings: parseInt(servings) || 1, dietaryTags: selectedTags, ingredients: parsedIngredients })
       regenerateGroceryList()
     } else {
       const meal: Meal = {
@@ -122,39 +120,31 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
     onClose()
   }
 
-  const title = editingMeal ? 'Edit Meal' : 'Add a Meal'
-
   return (
-    <Modal open={open} onClose={onClose} title={title}>
+    <Modal open={open} onClose={onClose} title={editingMeal ? 'Edit Meal' : 'Add a Meal'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          id="meal-name"
-          label="Meal name *"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Caprese salad"
-          error={nameError}
-          autoFocus
-        />
 
-        <Textarea
-          id="meal-notes"
-          label="Notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Any prep notes, restaurant name, etc."
-          rows={2}
-        />
+        {/* Recipe browser toggle */}
+        {!editingMeal && (
+          <div className="rounded-card bg-cream p-3 space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowRecipes((v) => !v)}
+              className="flex items-center gap-2 text-sm font-medium text-olive w-full"
+            >
+              <svg className={`h-4 w-4 transition-transform ${showRecipes ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+                <path d="M6 4l4 4-4 4" />
+              </svg>
+              Browse recipes
+              <span className="ml-auto text-xs text-olive/40 font-normal">18 ideas</span>
+            </button>
+            {showRecipes && <RecipeBrowser onSelect={applyRecipe} />}
+          </div>
+        )}
 
-        <Input
-          id="meal-servings"
-          label="Servings"
-          type="number"
-          min={1}
-          max={50}
-          value={servings}
-          onChange={(e) => setServings(e.target.value)}
-        />
+        <Input id="meal-name" label="Meal name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Caprese salad" error={nameError} autoFocus={!!editingMeal} />
+        <Textarea id="meal-notes" label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Prep notes, restaurant name, etc." rows={2} />
+        <Input id="meal-servings" label="Servings" type="number" min={1} max={50} value={servings} onChange={(e) => setServings(e.target.value)} />
 
         {/* Dietary tags */}
         <div className="space-y-2">
@@ -162,41 +152,19 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
           <div className="flex flex-wrap gap-2">
             {PRESET_DIETARY_TAGS.map((tag) => (
               <label key={tag} className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedTags.includes(tag)}
-                  onChange={() => toggleTag(tag)}
-                  className="rounded border-olive/30 text-sage focus:ring-sage"
-                />
+                <input type="checkbox" checked={selectedTags.includes(tag)} onChange={() => toggleTag(tag)} className="rounded border-olive/30 text-sage focus:ring-sage" />
                 <span className="text-xs text-olive capitalize">{tag}</span>
               </label>
             ))}
           </div>
-
-          {/* Allergy tag input */}
           <div className="flex gap-2 items-end">
-            <Input
-              id="allergy-input"
-              label="Add allergy (e.g. Shellfish)"
-              value={allergyInput}
-              onChange={(e) => setAllergyInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAllergyTag() } }}
-              placeholder="Shellfish, Peanuts…"
-              className="flex-1"
-            />
-            <Button type="button" variant="ghost" size="sm" onClick={addAllergyTag} className="mb-0.5">
-              Add
-            </Button>
+            <Input id="allergy-input" label="Add allergy (e.g. Shellfish)" value={allergyInput} onChange={(e) => setAllergyInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAllergyTag() } }} placeholder="Shellfish, Peanuts…" className="flex-1" />
+            <Button type="button" variant="ghost" size="sm" onClick={addAllergyTag} className="mb-0.5">Add</Button>
           </div>
-
           {selectedTags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {selectedTags.map((tag) => (
-                <DietaryTagBadge
-                  key={tag}
-                  tag={tag}
-                  onRemove={() => setSelectedTags((prev) => prev.filter((t) => t !== tag))}
-                />
+                <DietaryTagBadge key={tag} tag={tag} onRemove={() => setSelectedTags((prev) => prev.filter((t) => t !== tag))} />
               ))}
             </div>
           )}
@@ -208,53 +176,21 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
           <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
             {ingredients.map((row) => (
               <div key={row.id} className="flex gap-2 items-center">
-                <input
-                  className="flex-1 min-w-0 rounded-card border border-olive/20 bg-white px-2 py-1.5 text-xs text-olive placeholder:text-olive/40 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
-                  placeholder="Ingredient"
-                  value={row.name}
-                  onChange={(e) => updateIngredient(row.id, 'name', e.target.value)}
-                />
-                <input
-                  className="w-14 rounded-card border border-olive/20 bg-white px-2 py-1.5 text-xs text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
-                  type="number"
-                  min={0}
-                  step="0.25"
-                  placeholder="Qty"
-                  value={row.quantity}
-                  onChange={(e) => updateIngredient(row.id, 'quantity', e.target.value)}
-                />
-                <input
-                  className="w-16 rounded-card border border-olive/20 bg-white px-2 py-1.5 text-xs text-olive placeholder:text-olive/40 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
-                  placeholder="Unit"
-                  value={row.unit}
-                  onChange={(e) => updateIngredient(row.id, 'unit', e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeIngredient(row.id)}
-                  className="text-olive/30 hover:text-red-400 transition-colors"
-                  aria-label="Remove ingredient"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-                    <line x1="4" y1="4" x2="12" y2="12" />
-                    <line x1="12" y1="4" x2="4" y2="12" />
-                  </svg>
+                <input className="flex-1 min-w-0 rounded-card border border-olive/20 bg-white px-2 py-1.5 text-xs text-olive placeholder:text-olive/40 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none" placeholder="Ingredient" value={row.name} onChange={(e) => updateIngredient(row.id, 'name', e.target.value)} />
+                <input className="w-14 rounded-card border border-olive/20 bg-white px-2 py-1.5 text-xs text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none" type="number" min={0} step="0.25" placeholder="Qty" value={row.quantity} onChange={(e) => updateIngredient(row.id, 'quantity', e.target.value)} />
+                <input className="w-16 rounded-card border border-olive/20 bg-white px-2 py-1.5 text-xs text-olive placeholder:text-olive/40 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none" placeholder="Unit" value={row.unit} onChange={(e) => updateIngredient(row.id, 'unit', e.target.value)} />
+                <button type="button" onClick={() => removeIngredient(row.id)} className="text-olive/30 hover:text-red-400 transition-colors" aria-label="Remove ingredient">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round"><line x1="4" y1="4" x2="12" y2="12" /><line x1="12" y1="4" x2="4" y2="12" /></svg>
                 </button>
               </div>
             ))}
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={addIngredientRow}>
-            + Add ingredient
-          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={addIngredientRow}>+ Add ingredient</Button>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary">
-            {editingMeal ? 'Save changes' : 'Add meal'}
-          </Button>
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary">{editingMeal ? 'Save changes' : 'Add meal'}</Button>
         </div>
       </form>
     </Modal>

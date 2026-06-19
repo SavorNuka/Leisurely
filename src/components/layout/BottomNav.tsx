@@ -37,6 +37,17 @@ const navItems = [
     ),
   },
   {
+    to: '/packing',
+    label: 'Packing',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="7" width="14" height="10" rx="2" />
+        <path d="M7 7V5a1 1 0 011-1h4a1 1 0 011 1v2" />
+        <line x1="3" y1="11" x2="17" y2="11" />
+      </svg>
+    ),
+  },
+  {
     to: '/settings',
     label: 'Settings',
     icon: (

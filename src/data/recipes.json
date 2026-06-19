@@ -1,0 +1,270 @@
+[
+  {
+    "id": "r-001",
+    "name": "Yogurt Parfait",
+    "description": "Creamy Greek yogurt layered with granola and fresh berries",
+    "servings": 2,
+    "dietaryTags": ["vegetarian"],
+    "ingredients": [
+      { "id": "r-001-1", "name": "Greek yogurt", "quantity": 400, "unit": "g" },
+      { "id": "r-001-2", "name": "Granola", "quantity": 100, "unit": "g" },
+      { "id": "r-001-3", "name": "Mixed berries", "quantity": 150, "unit": "g" },
+      { "id": "r-001-4", "name": "Honey", "quantity": 2, "unit": "tbsp" }
+    ]
+  },
+  {
+    "id": "r-002",
+    "name": "Avocado Toast",
+    "description": "Sourdough topped with smashed avocado, lemon, and chili flakes",
+    "servings": 2,
+    "dietaryTags": ["vegan"],
+    "ingredients": [
+      { "id": "r-002-1", "name": "Sourdough bread", "quantity": 4, "unit": "slices" },
+      { "id": "r-002-2", "name": "Avocados", "quantity": 2, "unit": "count" },
+      { "id": "r-002-3", "name": "Lemon", "quantity": 1, "unit": "count" },
+      { "id": "r-002-4", "name": "Chili flakes", "quantity": 0.5, "unit": "tsp" },
+      { "id": "r-002-5", "name": "Olive oil", "quantity": 1, "unit": "tbsp" }
+    ]
+  },
+  {
+    "id": "r-003",
+    "name": "Overnight Oats",
+    "description": "Creamy oats soaked overnight with chia seeds and almond milk",
+    "servings": 2,
+    "dietaryTags": ["vegan", "dairy-free"],
+    "ingredients": [
+      { "id": "r-003-1", "name": "Rolled oats", "quantity": 160, "unit": "g" },
+      { "id": "r-003-2", "name": "Almond milk", "quantity": 300, "unit": "ml" },
+      { "id": "r-003-3", "name": "Chia seeds", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-003-4", "name": "Maple syrup", "quantity": 1, "unit": "tbsp" },
+      { "id": "r-003-5", "name": "Banana", "quantity": 1, "unit": "count" }
+    ]
+  },
+  {
+    "id": "r-004",
+    "name": "Smoked Salmon Bagel",
+    "description": "Toasted bagel with cream cheese, smoked salmon, and capers",
+    "servings": 2,
+    "dietaryTags": ["dairy-free"],
+    "ingredients": [
+      { "id": "r-004-1", "name": "Bagels", "quantity": 2, "unit": "count" },
+      { "id": "r-004-2", "name": "Cream cheese", "quantity": 100, "unit": "g" },
+      { "id": "r-004-3", "name": "Smoked salmon", "quantity": 150, "unit": "g" },
+      { "id": "r-004-4", "name": "Capers", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-004-5", "name": "Red onion", "quantity": 0.5, "unit": "count" },
+      { "id": "r-004-6", "name": "Fresh dill", "quantity": 1, "unit": "small bunch" }
+    ]
+  },
+  {
+    "id": "r-005",
+    "name": "Caprese Salad",
+    "description": "Fresh mozzarella, ripe tomatoes, and basil drizzled with olive oil",
+    "servings": 2,
+    "dietaryTags": ["vegetarian", "gluten-free"],
+    "ingredients": [
+      { "id": "r-005-1", "name": "Fresh mozzarella", "quantity": 250, "unit": "g" },
+      { "id": "r-005-2", "name": "Tomatoes", "quantity": 3, "unit": "count" },
+      { "id": "r-005-3", "name": "Fresh basil", "quantity": 1, "unit": "bunch" },
+      { "id": "r-005-4", "name": "Extra-virgin olive oil", "quantity": 3, "unit": "tbsp" },
+      { "id": "r-005-5", "name": "Sea salt", "quantity": 1, "unit": "pinch" }
+    ]
+  },
+  {
+    "id": "r-006",
+    "name": "Mediterranean Wrap",
+    "description": "Hummus and roasted vegetables wrapped in a soft flatbread",
+    "servings": 2,
+    "dietaryTags": ["vegan"],
+    "ingredients": [
+      { "id": "r-006-1", "name": "Flatbreads", "quantity": 2, "unit": "count" },
+      { "id": "r-006-2", "name": "Hummus", "quantity": 100, "unit": "g" },
+      { "id": "r-006-3", "name": "Roasted red peppers", "quantity": 100, "unit": "g" },
+      { "id": "r-006-4", "name": "Cucumber", "quantity": 1, "unit": "count" },
+      { "id": "r-006-5", "name": "Cherry tomatoes", "quantity": 100, "unit": "g" },
+      { "id": "r-006-6", "name": "Baby spinach", "quantity": 50, "unit": "g" }
+    ]
+  },
+  {
+    "id": "r-007",
+    "name": "Prosciutto Panini",
+    "description": "Pressed sandwich with prosciutto, provolone, and sun-dried tomatoes",
+    "servings": 2,
+    "dietaryTags": [],
+    "ingredients": [
+      { "id": "r-007-1", "name": "Ciabatta rolls", "quantity": 2, "unit": "count" },
+      { "id": "r-007-2", "name": "Prosciutto", "quantity": 80, "unit": "g" },
+      { "id": "r-007-3", "name": "Provolone cheese", "quantity": 60, "unit": "g" },
+      { "id": "r-007-4", "name": "Sun-dried tomatoes", "quantity": 4, "unit": "count" },
+      { "id": "r-007-5", "name": "Arugula", "quantity": 30, "unit": "g" },
+      { "id": "r-007-6", "name": "Pesto", "quantity": 2, "unit": "tbsp" }
+    ]
+  },
+  {
+    "id": "r-008",
+    "name": "Gazpacho",
+    "description": "Chilled Spanish tomato soup — great to prep ahead for warm days",
+    "servings": 4,
+    "dietaryTags": ["vegan", "gluten-free"],
+    "ingredients": [
+      { "id": "r-008-1", "name": "Ripe tomatoes", "quantity": 800, "unit": "g" },
+      { "id": "r-008-2", "name": "Cucumber", "quantity": 1, "unit": "count" },
+      { "id": "r-008-3", "name": "Red bell pepper", "quantity": 1, "unit": "count" },
+      { "id": "r-008-4", "name": "Red onion", "quantity": 0.5, "unit": "count" },
+      { "id": "r-008-5", "name": "Garlic", "quantity": 2, "unit": "cloves" },
+      { "id": "r-008-6", "name": "Olive oil", "quantity": 4, "unit": "tbsp" },
+      { "id": "r-008-7", "name": "Sherry vinegar", "quantity": 2, "unit": "tbsp" }
+    ]
+  },
+  {
+    "id": "r-009",
+    "name": "Pasta Aglio e Olio",
+    "description": "Simple spaghetti with garlic, olive oil, chili, and parsley",
+    "servings": 2,
+    "dietaryTags": ["vegetarian", "vegan"],
+    "ingredients": [
+      { "id": "r-009-1", "name": "Spaghetti", "quantity": 200, "unit": "g" },
+      { "id": "r-009-2", "name": "Garlic", "quantity": 6, "unit": "cloves" },
+      { "id": "r-009-3", "name": "Olive oil", "quantity": 5, "unit": "tbsp" },
+      { "id": "r-009-4", "name": "Chili flakes", "quantity": 1, "unit": "tsp" },
+      { "id": "r-009-5", "name": "Fresh parsley", "quantity": 1, "unit": "small bunch" }
+    ]
+  },
+  {
+    "id": "r-010",
+    "name": "Grilled Salmon with Veg",
+    "description": "Pan-seared salmon fillet with roasted seasonal vegetables",
+    "servings": 2,
+    "dietaryTags": ["gluten-free", "dairy-free"],
+    "ingredients": [
+      { "id": "r-010-1", "name": "Salmon fillets", "quantity": 2, "unit": "count" },
+      { "id": "r-010-2", "name": "Zucchini", "quantity": 1, "unit": "count" },
+      { "id": "r-010-3", "name": "Cherry tomatoes", "quantity": 150, "unit": "g" },
+      { "id": "r-010-4", "name": "Lemon", "quantity": 1, "unit": "count" },
+      { "id": "r-010-5", "name": "Olive oil", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-010-6", "name": "Fresh dill", "quantity": 1, "unit": "small bunch" }
+    ]
+  },
+  {
+    "id": "r-011",
+    "name": "Chicken Piccata",
+    "description": "Pan-fried chicken breast in a lemony caper butter sauce",
+    "servings": 2,
+    "dietaryTags": [],
+    "ingredients": [
+      { "id": "r-011-1", "name": "Chicken breasts", "quantity": 2, "unit": "count" },
+      { "id": "r-011-2", "name": "All-purpose flour", "quantity": 3, "unit": "tbsp" },
+      { "id": "r-011-3", "name": "Butter", "quantity": 60, "unit": "g" },
+      { "id": "r-011-4", "name": "Lemon juice", "quantity": 3, "unit": "tbsp" },
+      { "id": "r-011-5", "name": "Capers", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-011-6", "name": "Chicken broth", "quantity": 100, "unit": "ml" }
+    ]
+  },
+  {
+    "id": "r-012",
+    "name": "Shakshuka",
+    "description": "Eggs poached in a spiced tomato and pepper sauce — breakfast or dinner",
+    "servings": 2,
+    "dietaryTags": ["vegetarian", "gluten-free"],
+    "ingredients": [
+      { "id": "r-012-1", "name": "Eggs", "quantity": 4, "unit": "count" },
+      { "id": "r-012-2", "name": "Canned crushed tomatoes", "quantity": 400, "unit": "g" },
+      { "id": "r-012-3", "name": "Red bell pepper", "quantity": 1, "unit": "count" },
+      { "id": "r-012-4", "name": "Onion", "quantity": 1, "unit": "count" },
+      { "id": "r-012-5", "name": "Garlic", "quantity": 3, "unit": "cloves" },
+      { "id": "r-012-6", "name": "Cumin", "quantity": 1, "unit": "tsp" },
+      { "id": "r-012-7", "name": "Paprika", "quantity": 1, "unit": "tsp" },
+      { "id": "r-012-8", "name": "Feta cheese", "quantity": 60, "unit": "g" }
+    ]
+  },
+  {
+    "id": "r-013",
+    "name": "Risotto ai Funghi",
+    "description": "Creamy Arborio rice with porcini and cremini mushrooms",
+    "servings": 2,
+    "dietaryTags": ["vegetarian"],
+    "ingredients": [
+      { "id": "r-013-1", "name": "Arborio rice", "quantity": 160, "unit": "g" },
+      { "id": "r-013-2", "name": "Cremini mushrooms", "quantity": 250, "unit": "g" },
+      { "id": "r-013-3", "name": "Dried porcini mushrooms", "quantity": 20, "unit": "g" },
+      { "id": "r-013-4", "name": "Dry white wine", "quantity": 100, "unit": "ml" },
+      { "id": "r-013-5", "name": "Vegetable broth", "quantity": 800, "unit": "ml" },
+      { "id": "r-013-6", "name": "Shallots", "quantity": 2, "unit": "count" },
+      { "id": "r-013-7", "name": "Parmesan", "quantity": 50, "unit": "g" },
+      { "id": "r-013-8", "name": "Butter", "quantity": 30, "unit": "g" }
+    ]
+  },
+  {
+    "id": "r-014",
+    "name": "Cheese & Charcuterie",
+    "description": "A no-cook spread of cured meats, cheeses, olives, and crackers",
+    "servings": 4,
+    "dietaryTags": ["gluten-free"],
+    "ingredients": [
+      { "id": "r-014-1", "name": "Assorted cheese", "quantity": 200, "unit": "g" },
+      { "id": "r-014-2", "name": "Cured meats (salami, coppa)", "quantity": 150, "unit": "g" },
+      { "id": "r-014-3", "name": "Olives", "quantity": 100, "unit": "g" },
+      { "id": "r-014-4", "name": "Cornichons", "quantity": 50, "unit": "g" },
+      { "id": "r-014-5", "name": "Crackers or bread", "quantity": 1, "unit": "packet" },
+      { "id": "r-014-6", "name": "Grapes", "quantity": 150, "unit": "g" }
+    ]
+  },
+  {
+    "id": "r-015",
+    "name": "Hummus & Crudités",
+    "description": "Store-bought or homemade hummus with fresh vegetables for dipping",
+    "servings": 4,
+    "dietaryTags": ["vegan", "gluten-free"],
+    "ingredients": [
+      { "id": "r-015-1", "name": "Hummus", "quantity": 250, "unit": "g" },
+      { "id": "r-015-2", "name": "Carrots", "quantity": 3, "unit": "count" },
+      { "id": "r-015-3", "name": "Cucumber", "quantity": 1, "unit": "count" },
+      { "id": "r-015-4", "name": "Cherry tomatoes", "quantity": 150, "unit": "g" },
+      { "id": "r-015-5", "name": "Bell pepper", "quantity": 1, "unit": "count" },
+      { "id": "r-015-6", "name": "Pita bread", "quantity": 4, "unit": "count" }
+    ]
+  },
+  {
+    "id": "r-016",
+    "name": "Bruschetta al Pomodoro",
+    "description": "Toasted bread rubbed with garlic and topped with fresh tomatoes",
+    "servings": 4,
+    "dietaryTags": ["vegetarian", "vegan"],
+    "ingredients": [
+      { "id": "r-016-1", "name": "Rustic bread", "quantity": 8, "unit": "slices" },
+      { "id": "r-016-2", "name": "Ripe tomatoes", "quantity": 4, "unit": "count" },
+      { "id": "r-016-3", "name": "Garlic", "quantity": 2, "unit": "cloves" },
+      { "id": "r-016-4", "name": "Fresh basil", "quantity": 1, "unit": "small bunch" },
+      { "id": "r-016-5", "name": "Olive oil", "quantity": 3, "unit": "tbsp" }
+    ]
+  },
+  {
+    "id": "r-017",
+    "name": "Frittata",
+    "description": "Italian baked omelette — great for using up any vegetables on hand",
+    "servings": 4,
+    "dietaryTags": ["vegetarian", "gluten-free"],
+    "ingredients": [
+      { "id": "r-017-1", "name": "Eggs", "quantity": 8, "unit": "count" },
+      { "id": "r-017-2", "name": "Mixed vegetables (zucchini, peppers)", "quantity": 200, "unit": "g" },
+      { "id": "r-017-3", "name": "Parmesan", "quantity": 40, "unit": "g" },
+      { "id": "r-017-4", "name": "Olive oil", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-017-5", "name": "Fresh herbs", "quantity": 1, "unit": "small bunch" }
+    ]
+  },
+  {
+    "id": "r-018",
+    "name": "Panzanella",
+    "description": "Tuscan bread salad with tomatoes, cucumber, and red onion",
+    "servings": 4,
+    "dietaryTags": ["vegetarian", "vegan"],
+    "ingredients": [
+      { "id": "r-018-1", "name": "Stale ciabatta", "quantity": 200, "unit": "g" },
+      { "id": "r-018-2", "name": "Heirloom tomatoes", "quantity": 500, "unit": "g" },
+      { "id": "r-018-3", "name": "Cucumber", "quantity": 1, "unit": "count" },
+      { "id": "r-018-4", "name": "Red onion", "quantity": 0.5, "unit": "count" },
+      { "id": "r-018-5", "name": "Capers", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-018-6", "name": "Red wine vinegar", "quantity": 2, "unit": "tbsp" },
+      { "id": "r-018-7", "name": "Olive oil", "quantity": 4, "unit": "tbsp" }
+    ]
+  }
+]
