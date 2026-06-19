@@ -64,12 +64,20 @@ export interface Plan {
   startDate: string
   endDate: string
   days: DayPlan[]
+  isPublic: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface Note {
+  id: string
+  text: string
+  createdAt: string
 }
 
 export interface AppState {
   plan: Plan | null
   meals: Record<string, Meal>
   groceryList: GroceryItem[]
+  notes: Note[]
 }

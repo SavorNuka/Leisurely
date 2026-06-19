@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { ExportImport } from './ExportImport'
+import { SharePlan } from './SharePlan'
+import { PdfExport } from './PdfExport'
 import { usePlan } from '../../hooks/usePlan'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
@@ -12,6 +14,8 @@ export function SettingsPage() {
     <div className="py-6 space-y-5">
       <h2 className="text-lg font-serif font-semibold text-olive">Settings</h2>
 
+      <SharePlan />
+      <PdfExport />
       <ExportImport />
 
       {plan && (

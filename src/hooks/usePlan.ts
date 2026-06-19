@@ -15,6 +15,7 @@ export function usePlan() {
       startDate,
       endDate,
       days: generateDayPlans(startDate, endDate),
+      isPublic: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -27,6 +28,7 @@ export function usePlan() {
     clearPlan: store.clearPlan,
     updateDateRange: store.updatePlanDateRange,
     updateName: store.updatePlanName,
+    toggleVisibility: store.togglePlanVisibility,
     assignMeal: store.assignMealToSlot,
     clearSlot: store.clearSlot,
   }

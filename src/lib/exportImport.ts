@@ -31,6 +31,11 @@ export function parseState(json: string): AppState {
     throw new Error('Invalid backup: groceryList must be an array')
   }
 
+  // notes is optional for backwards compatibility with Phase 1 exports
+  if (!Array.isArray(s.notes)) {
+    s.notes = []
+  }
+
   return parsed as AppState
 }
 

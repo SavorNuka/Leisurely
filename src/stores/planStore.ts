@@ -1,15 +1,16 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { Plan, Meal, GroceryItem, MealSlotKey, AppState } from '../types'
+import type { Plan, Meal, GroceryItem, MealSlotKey, Note, AppState } from '../types'
 import { mergeDayPlans } from '../lib/dateUtils'
 import { aggregateIngredients } from '../lib/groceryAggregator'
-import { savePlan, saveMeals, saveGroceryList, clearPlanFromDB } from '../lib/db'
+import { savePlan, saveMeals, saveGroceryList, saveNotes, clearPlanFromDB } from '../lib/db'
 
 interface PlanStore extends AppState {
   setPlan: (plan: Plan) => void
   clearPlan: () => void
   updatePlanDateRange: (startDate: string, endDate: string) => void
   updatePlanName: (name: string) => void
+  togglePlanVisibility: () => void
 
   addMeal: (meal: Meal) => void
   updateMeal: (id: string, updates: Partial<Meal>) => void
@@ -21,6 +22,9 @@ interface PlanStore extends AppState {
   regenerateGroceryList: () => void
   toggleGroceryItem: (id: string) => void
 
+  addNote: (text: string) => void
+  removeNote: (id: string) => void
+
   importState: (state: AppState) => void
   exportState: () => AppState
 }
@@ -30,6 +34,7 @@ export const usePlanStore = create<PlanStore>()(
     plan: null,
     meals: {},
     groceryList: [],
+    notes: [],
 
     setPlan(plan) {
       set({ plan })
@@ -43,8 +48,13 @@ export const usePlanStore = create<PlanStore>()(
     updatePlanName(name) {
       const { plan } = get()
       if (!plan) return
-      const updated = { ...plan, name, updatedAt: new Date().toISOString() }
-      set({ plan: updated })
+      set({ plan: { ...plan, name, updatedAt: new Date().toISOString() } })
+    },
+
+    togglePlanVisibility() {
+      const { plan } = get()
+      if (!plan) return
+      set({ plan: { ...plan, isPublic: !plan.isPublic, updatedAt: new Date().toISOString() } })
     },
 
     updatePlanDateRange(startDate, endDate) {
@@ -134,18 +144,35 @@ export const usePlanStore = create<PlanStore>()(
       }))
     },
 
+    addNote(text) {
+      const note: Note = {
+        id: crypto.randomUUID(),
+        text: text.trim(),
+        createdAt: new Date().toISOString(),
+      }
+      set((s) => ({ notes: [note, ...s.notes] }))
+    },
+
+    removeNote(id) {
+      set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }))
+    },
+
     importState(state) {
-      set({ plan: state.plan, meals: state.meals, groceryList: state.groceryList })
+      set({
+        plan: state.plan,
+        meals: state.meals,
+        groceryList: state.groceryList,
+        notes: state.notes ?? [],
+      })
     },
 
     exportState() {
-      const { plan, meals, groceryList } = get()
-      return { plan, meals, groceryList }
+      const { plan, meals, groceryList, notes } = get()
+      return { plan, meals, groceryList, notes }
     },
   }))
 )
 
-// Debounced persistence subscriptions
 function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number) {
   let timer: ReturnType<typeof setTimeout>
   return (...args: T) => {
@@ -167,6 +194,11 @@ const persistGrocery = debounce((list: GroceryItem[]) => {
   saveGroceryList(list)
 }, 500)
 
+const persistNotes = debounce((notes: Note[]) => {
+  saveNotes(notes)
+}, 500)
+
 usePlanStore.subscribe((s) => s.plan, persistPlan)
 usePlanStore.subscribe((s) => s.meals, persistMeals)
 usePlanStore.subscribe((s) => s.groceryList, persistGrocery)
+usePlanStore.subscribe((s) => s.notes, persistNotes)

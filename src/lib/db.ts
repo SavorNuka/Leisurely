@@ -1,27 +1,33 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Plan, Meal, GroceryItem } from '../types'
+import type { Plan, Meal, GroceryItem, Note } from '../types'
 
 interface LeisurelyDB extends DBSchema {
   plan: { key: string; value: Plan }
   meals: { key: string; value: Meal; indexes: { 'by-name': string } }
   groceryList: { key: string; value: GroceryItem }
+  notes: { key: string; value: Note }
   meta: { key: string; value: string }
 }
 
 const DB_NAME = 'leisurely-db'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbPromise: Promise<IDBPDatabase<LeisurelyDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<LeisurelyDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        db.createObjectStore('plan', { keyPath: 'id' })
-        const mealStore = db.createObjectStore('meals', { keyPath: 'id' })
-        mealStore.createIndex('by-name', 'name')
-        db.createObjectStore('groceryList', { keyPath: 'id' })
-        db.createObjectStore('meta')
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore('plan', { keyPath: 'id' })
+          const mealStore = db.createObjectStore('meals', { keyPath: 'id' })
+          mealStore.createIndex('by-name', 'name')
+          db.createObjectStore('groceryList', { keyPath: 'id' })
+          db.createObjectStore('meta')
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore('notes', { keyPath: 'id' })
+        }
       },
     })
   }
@@ -32,6 +38,7 @@ export async function loadFromDB(): Promise<{
   plan: Plan | null
   meals: Record<string, Meal>
   groceryList: GroceryItem[]
+  notes: Note[]
 }> {
   const db = await getDB()
   const activePlanId = await db.get('meta', 'activePlanId')
@@ -48,8 +55,9 @@ export async function loadFromDB(): Promise<{
   }
 
   const groceryList = await db.getAll('groceryList')
+  const notes = await db.getAll('notes')
 
-  return { plan, meals, groceryList }
+  return { plan, meals, groceryList, notes }
 }
 
 export async function savePlan(plan: Plan) {
@@ -87,6 +95,16 @@ export async function saveGroceryList(items: GroceryItem[]) {
   await tx.store.clear()
   for (const item of items) {
     await tx.store.put(item)
+  }
+  await tx.done
+}
+
+export async function saveNotes(notes: Note[]) {
+  const db = await getDB()
+  const tx = db.transaction('notes', 'readwrite')
+  await tx.store.clear()
+  for (const note of notes) {
+    await tx.store.put(note)
   }
   await tx.done
 }

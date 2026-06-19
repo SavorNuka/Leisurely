@@ -25,6 +25,18 @@ const navItems = [
     ),
   },
   {
+    to: '/notes',
+    label: 'Notes',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 4h12a1 1 0 011 1v9l-4 4H4a1 1 0 01-1-1V5a1 1 0 011-1z" />
+        <line x1="7" y1="8" x2="13" y2="8" />
+        <line x1="7" y1="11" x2="11" y2="11" />
+        <path d="M13 14v3l4-4h-3a1 1 0 01-1-1z" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
     to: '/settings',
     label: 'Settings',
     icon: (
@@ -38,7 +50,7 @@ const navItems = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-olive/10 safe-bottom">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-olive/10">
       <div className="max-w-2xl mx-auto flex">
         {navItems.map((item) => (
           <NavLink
