@@ -1,4 +1,10 @@
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
+import { isConfigured } from '../../lib/supabase'
+
 export function Header() {
+  const { user, signOut } = useAuth()
+
   return (
     <header className="sticky top-0 z-40 bg-sage shadow-sm">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-2.5">
@@ -18,7 +24,7 @@ export function Header() {
           <path d="M16 26 C12 24, 9 21, 10 18" />
           <path d="M16 26 C20 24, 23 21, 22 18" />
         </svg>
-        <div>
+        <div className="flex-1">
           <span className="font-serif font-semibold text-lg text-cream leading-none tracking-tight">
             Leisurely
           </span>
@@ -26,6 +32,29 @@ export function Header() {
             Meal planning, minus the stress.
           </span>
         </div>
+
+        {isConfigured() && (
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <span className="hidden sm:block text-xs text-cream/70 truncate max-w-[140px]">{user.email}</span>
+                <button
+                  onClick={signOut}
+                  className="text-xs text-cream/80 hover:text-cream px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="text-xs text-cream/80 hover:text-cream px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </header>
   )

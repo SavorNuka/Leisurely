@@ -1,16 +1,17 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Plan, Meal, GroceryItem, Note } from '../types'
+import type { Plan, Meal, GroceryItem, Note, PackingItem } from '../types'
 
 interface LeisurelyDB extends DBSchema {
   plan: { key: string; value: Plan }
   meals: { key: string; value: Meal; indexes: { 'by-name': string } }
   groceryList: { key: string; value: GroceryItem }
   notes: { key: string; value: Note }
+  packingList: { key: string; value: PackingItem }
   meta: { key: string; value: string }
 }
 
 const DB_NAME = 'leisurely-db'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 let dbPromise: Promise<IDBPDatabase<LeisurelyDB>> | null = null
 
@@ -28,6 +29,9 @@ function getDB() {
         if (oldVersion < 2) {
           db.createObjectStore('notes', { keyPath: 'id' })
         }
+        if (oldVersion < 3) {
+          db.createObjectStore('packingList', { keyPath: 'id' })
+        }
       },
     })
   }
@@ -39,6 +43,7 @@ export async function loadFromDB(): Promise<{
   meals: Record<string, Meal>
   groceryList: GroceryItem[]
   notes: Note[]
+  packingList: PackingItem[]
 }> {
   const db = await getDB()
   const activePlanId = await db.get('meta', 'activePlanId')
@@ -56,8 +61,9 @@ export async function loadFromDB(): Promise<{
 
   const groceryList = await db.getAll('groceryList')
   const notes = await db.getAll('notes')
+  const packingList = await db.getAll('packingList')
 
-  return { plan, meals, groceryList, notes }
+  return { plan, meals, groceryList, notes, packingList }
 }
 
 export async function savePlan(plan: Plan) {
@@ -105,6 +111,16 @@ export async function saveNotes(notes: Note[]) {
   await tx.store.clear()
   for (const note of notes) {
     await tx.store.put(note)
+  }
+  await tx.done
+}
+
+export async function savePackingList(items: PackingItem[]) {
+  const db = await getDB()
+  const tx = db.transaction('packingList', 'readwrite')
+  await tx.store.clear()
+  for (const item of items) {
+    await tx.store.put(item)
   }
   await tx.done
 }

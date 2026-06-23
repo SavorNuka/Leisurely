@@ -7,8 +7,6 @@ export function PdfExport() {
   const exportState = usePlanStore((s) => s.exportState)
   const [loading, setLoading] = useState(false)
 
-  if (!plan) return null
-
   async function handleExport() {
     setLoading(true)
     try {
@@ -24,13 +22,15 @@ export function PdfExport() {
       <div>
         <h3 className="font-serif text-base font-semibold text-olive mb-1">Export PDF</h3>
         <p className="text-xs text-olive/60">
-          Download a beautifully formatted PDF of your meal plan and grocery list — perfect for printing or sharing offline.
+          {plan
+            ? 'Download a beautifully formatted PDF of your meal plan and grocery list — perfect for printing or sharing offline.'
+            : 'Add a trip plan first to export a printable PDF.'}
         </p>
       </div>
       <Button
         variant="secondary"
         onClick={handleExport}
-        disabled={loading}
+        disabled={loading || !plan}
         className="w-full justify-center"
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
