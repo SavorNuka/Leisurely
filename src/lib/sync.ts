@@ -248,6 +248,52 @@ export async function pullFromSupabase(
   return { plan, meals, groceryList, notes, packingList }
 }
 
+// ── Invites ───────────────────────────────────────────────────────────────────
+
+export async function sendInvites(
+  planId: string,
+  planName: string,
+  inviterName: string,
+  emails: string[]
+): Promise<{ error: string | null }> {
+  if (!isConfigured() || !supabase) return { error: 'Supabase not configured' }
+  const { error } = await supabase.functions.invoke('invite-collaborator', {
+    body: { planId, planName, inviterName, emails },
+  })
+  return { error: error?.message ?? null }
+}
+
+export async function processInvite(
+  token: string,
+  userId: string
+): Promise<{ planId: string | null; error: string | null }> {
+  if (!isConfigured() || !supabase) return { planId: null, error: 'Supabase not configured' }
+
+  const { data: invite, error: fetchError } = await supabase
+    .from('plan_invites')
+    .select('id, plan_id, expires_at, accepted_at')
+    .eq('token', token)
+    .single()
+
+  if (fetchError || !invite) return { planId: null, error: 'Invite not found or already used.' }
+  if (invite.accepted_at) return { planId: null, error: 'This invite has already been accepted.' }
+  if (new Date(invite.expires_at) < new Date()) return { planId: null, error: 'This invite has expired.' }
+
+  await supabase.from('plan_collaborators').upsert({
+    plan_id: invite.plan_id,
+    user_id: userId,
+    invited_by: null,
+    role: 'editor',
+  })
+
+  await supabase
+    .from('plan_invites')
+    .update({ accepted_at: new Date().toISOString() })
+    .eq('id', invite.id)
+
+  return { planId: invite.plan_id, error: null }
+}
+
 // ── Realtime subscriptions ────────────────────────────────────────────────────
 
 export function subscribeToRealtime(

@@ -8,6 +8,7 @@ export function AuthPage() {
   const { signIn, signUp, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,7 @@ export function AuthPage() {
         await signIn(email, password)
         navigate('/plan')
       } else {
-        await signUp(email, password)
+        await signUp(email, password, firstName.trim() || undefined)
         setSuccess('Account created! Check your email to confirm, then sign in.')
         setMode('signin')
       }
@@ -49,9 +50,7 @@ export function AuthPage() {
           <code className="font-mono text-xs bg-olive/10 px-1 py-0.5 rounded">VITE_SUPABASE_ANON_KEY</code> to{' '}
           <code className="font-mono text-xs bg-olive/10 px-1 py-0.5 rounded">.env.local</code> to enable cloud sync and real-time collaboration.
         </p>
-        <p className="text-xs text-olive/40">
-          The app works in local-only mode without credentials.
-        </p>
+        <p className="text-xs text-olive/40">The app works in local-only mode without credentials.</p>
         <Button variant="ghost" onClick={() => navigate(-1)}>← Go back</Button>
       </div>
     )
@@ -72,6 +71,17 @@ export function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-card shadow-card p-6 space-y-4">
+          {mode === 'signup' && (
+            <Input
+              id="first-name"
+              label="First name"
+              type="text"
+              autoComplete="given-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Sarah"
+            />
+          )}
           <Input
             id="email"
             label="Email"

@@ -3,11 +3,13 @@ import { ExportImport } from './ExportImport'
 import { SharePlan } from './SharePlan'
 import { PdfExport } from './PdfExport'
 import { usePlan } from '../../hooks/usePlan'
+import { useTour } from '../tour/TourProvider'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 
 export function SettingsPage() {
   const { plan, clearPlan } = usePlan()
+  const { startTour } = useTour()
   const [confirmClear, setConfirmClear] = useState(false)
 
   return (
@@ -17,6 +19,30 @@ export function SettingsPage() {
       <SharePlan />
       <PdfExport />
       <ExportImport />
+
+      {/* Tour */}
+      <div className="bg-white rounded-card shadow-card p-5 space-y-3">
+        <div>
+          <h3 className="font-serif text-base font-semibold text-olive mb-1">App Tour</h3>
+          <p className="text-xs text-olive/60">
+            Get a quick guided walkthrough of every feature in Leisurely.
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            localStorage.removeItem('leisurely:tour_seen')
+            startTour()
+          }}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="10" cy="10" r="8" />
+            <path d="M10 6v4l2.5 2.5" />
+          </svg>
+          Take a tour
+        </Button>
+      </div>
 
       {plan && (
         <div className="bg-white rounded-card shadow-card p-5 space-y-3">

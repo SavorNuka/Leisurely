@@ -38,7 +38,7 @@ export function DateRangePicker() {
   }
 
   return (
-    <div className="bg-white rounded-card shadow-card p-4 space-y-4">
+    <div className="bg-white rounded-card shadow-card p-4 space-y-4" data-tour="date-picker">
       <Input
         id="plan-name"
         label="Trip name"

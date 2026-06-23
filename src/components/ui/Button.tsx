@@ -23,7 +23,7 @@ export function Button({ variant = 'primary', size = 'md', className = '', child
   return (
     <button
       {...props}
-      className={`inline-flex items-center gap-1.5 rounded-card font-sans font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sage/50 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-card font-sans font-medium transition-colors active:scale-[0.97] transform focus:outline-none focus-visible:ring-2 focus-visible:ring-sage/50 disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {children}
     </button>

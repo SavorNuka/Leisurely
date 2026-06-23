@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
+import { motion } from 'framer-motion'
 
 const navItems = [
   {
     to: '/plan',
     label: 'Plan',
+    tourId: 'plan-tab',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="14" height="13" rx="2" />
@@ -16,6 +18,7 @@ const navItems = [
   {
     to: '/grocery',
     label: 'Grocery',
+    tourId: 'grocery-tab',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 4h1l1 8h9l1-6H7" />
@@ -27,6 +30,7 @@ const navItems = [
   {
     to: '/notes',
     label: 'Notes',
+    tourId: 'notes-tab',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 4h12a1 1 0 011 1v9l-4 4H4a1 1 0 01-1-1V5a1 1 0 011-1z" />
@@ -39,6 +43,7 @@ const navItems = [
   {
     to: '/packing',
     label: 'Packing',
+    tourId: 'packing-tab',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="7" width="14" height="10" rx="2" />
@@ -50,6 +55,7 @@ const navItems = [
   {
     to: '/settings',
     label: 'Settings',
+    tourId: 'settings-tab',
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="10" cy="10" r="2" />
@@ -67,14 +73,26 @@ export function BottomNav() {
           <NavLink
             key={item.to}
             to={item.to}
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium transition-colors ${
-                isActive ? 'text-sage' : 'text-olive/50 hover:text-olive'
-              }`
-            }
+            data-tour={item.tourId}
+            className="relative flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium"
           >
-            {item.icon}
-            {item.label}
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <motion.span
+                    layoutId="nav-indicator"
+                    className="absolute inset-x-2 top-0 h-0.5 bg-sage rounded-full"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span className={`transition-colors ${isActive ? 'text-sage' : 'text-olive/50 hover:text-olive'}`}>
+                  {item.icon}
+                </span>
+                <span className={`transition-colors ${isActive ? 'text-sage' : 'text-olive/50 hover:text-olive'}`}>
+                  {item.label}
+                </span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>

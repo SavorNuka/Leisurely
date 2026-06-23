@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { format, parseISO } from 'date-fns'
+import { motion, AnimatePresence } from 'framer-motion'
 import { usePlanStore } from '../../stores/planStore'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
@@ -29,7 +30,6 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
 
   return (
     <div className="bg-white rounded-card shadow-card overflow-hidden">
-      {/* Accent strip */}
       <div className="flex">
         <div className="w-1 shrink-0 bg-terracotta/50 rounded-l-card" />
         <div className="flex-1 p-4">
@@ -49,11 +49,15 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
             </button>
           </div>
 
-          {/* Action bar */}
-          <div className="flex items-center gap-4 mt-3 pt-2 border-t border-olive/8">
+          {/* Action bar — visible pill buttons */}
+          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-olive/8">
             <button
               onClick={onLike}
-              className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${liked ? 'text-red-400' : 'text-olive/40 hover:text-red-400'}`}
+              className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-2.5 py-1 transition-colors ${
+                liked
+                  ? 'text-red-400 bg-red-50'
+                  : 'text-olive/60 hover:text-red-400 hover:bg-red-50/60'
+              }`}
             >
               <svg className="h-3.5 w-3.5" fill={liked ? 'currentColor' : 'none'} viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M8 13.5S1.5 9.5 1.5 5.5a3 3 0 015.5-1.65A3 3 0 0114.5 5.5C14.5 9.5 8 13.5 8 13.5z" />
@@ -63,60 +67,74 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
 
             <button
               onClick={() => setReplyOpen((v) => !v)}
-              className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${replyOpen ? 'text-sage' : 'text-olive/40 hover:text-sage'}`}
+              className={`flex items-center gap-1.5 text-xs font-medium rounded-full px-2.5 py-1 transition-colors ${
+                replyOpen
+                  ? 'text-sage bg-sage/10'
+                  : 'text-olive/60 hover:text-sage hover:bg-sage/8'
+              }`}
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 9.5A6 6 0 112 7.5v.5l-1.5 4 4.5-1A6 6 0 0114 9.5z" />
               </svg>
-              {replyCount > 0 ? `${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}` : 'Reply'}
+              {replyCount > 0 ? `${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}` : 'Comment'}
             </button>
           </div>
         </div>
       </div>
 
       {/* Reply thread */}
-      {(replyOpen || replyCount > 0) && (
-        <div className="border-t border-olive/8 bg-olive/[0.02] px-4 py-3 space-y-3">
-          {(note.replies ?? []).map((reply) => (
-            <div key={reply.id} className="group flex gap-2.5">
-              <div className="w-px bg-olive/15 shrink-0 mt-1" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-olive leading-relaxed whitespace-pre-wrap">{reply.text}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <time className="text-xs text-olive/35">
-                    {format(parseISO(reply.createdAt), 'MMM d · h:mm a')}
-                  </time>
-                  <button
-                    onClick={() => onRemoveReply(reply.id)}
-                    aria-label="Delete reply"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/25 hover:text-red-400 rounded p-0.5"
-                  >
-                    <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-                      <line x1="3" y1="3" x2="9" y2="9" /><line x1="9" y1="3" x2="3" y2="9" />
-                    </svg>
-                  </button>
+      <AnimatePresence>
+        {(replyOpen || replyCount > 0) && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-olive/8 bg-olive/[0.02] px-4 py-3 space-y-3">
+              {(note.replies ?? []).map((reply) => (
+                <div key={reply.id} className="group flex gap-2.5">
+                  <div className="w-px bg-olive/15 shrink-0 mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-olive leading-relaxed whitespace-pre-wrap">{reply.text}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <time className="text-xs text-olive/35">
+                        {format(parseISO(reply.createdAt), 'MMM d · h:mm a')}
+                      </time>
+                      <button
+                        onClick={() => onRemoveReply(reply.id)}
+                        aria-label="Delete reply"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/25 hover:text-red-400 rounded p-0.5"
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+                          <line x1="3" y1="3" x2="9" y2="9" /><line x1="9" y1="3" x2="3" y2="9" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              ))}
 
-          {replyOpen && (
-            <div className="flex gap-2 pt-1">
-              <input
-                autoFocus
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitReply() }}
-                placeholder="Write a reply…"
-                className="flex-1 rounded-card border border-olive/20 bg-white px-3 py-1.5 text-xs text-olive placeholder:text-olive/35 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
-              />
-              <Button type="button" variant="primary" size="sm" onClick={submitReply} disabled={!replyText.trim()}>
-                Post
-              </Button>
+              {replyOpen && (
+                <div className="flex gap-2 pt-1">
+                  <input
+                    autoFocus
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitReply() }}
+                    placeholder="Write a reply…"
+                    className="flex-1 rounded-card border border-olive/20 bg-white px-3 py-1.5 text-xs text-olive placeholder:text-olive/35 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
+                  />
+                  <Button type="button" variant="primary" size="sm" onClick={submitReply} disabled={!replyText.trim()}>
+                    Post
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -174,16 +192,25 @@ export function NotesPage() {
         />
       ) : (
         <div className="space-y-3">
-          {notes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onLike={() => likeNote(note.id)}
-              onAddReply={(t) => addReply(note.id, t)}
-              onRemoveReply={(rid) => removeReply(note.id, rid)}
-              onDelete={() => removeNote(note.id)}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {notes.map((note) => (
+              <motion.div
+                key={note.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <NoteCard
+                  note={note}
+                  onLike={() => likeNote(note.id)}
+                  onAddReply={(t) => addReply(note.id, t)}
+                  onRemoveReply={(rid) => removeReply(note.id, rid)}
+                  onDelete={() => removeNote(note.id)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

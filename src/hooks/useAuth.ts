@@ -6,21 +6,33 @@ import { pullFromSupabase, pushPlan, pushNotes, pushPackingList, subscribeToReal
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
+  const [displayName, setDisplayName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const importState = usePlanStore((s) => s.importState)
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    if (!supabase) return
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single()
+    if (data?.display_name) setDisplayName(data.display_name)
+  }, [])
 
   const syncDown = useCallback(async (userId: string) => {
     setSyncing(true)
     try {
       const remote = await pullFromSupabase(userId)
       if (remote) importState(remote)
+      await fetchProfile(userId)
     } catch (e) {
       console.warn('Supabase sync failed', e)
     } finally {
       setSyncing(false)
     }
-  }, [importState])
+  }, [importState, fetchProfile])
 
   useEffect(() => {
     if (!isConfigured() || !supabase) {
@@ -38,6 +50,7 @@ export function useAuth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null
       setUser(u)
+      if (!u) setDisplayName(null)
       if (u) syncDown(u.id)
     })
 
@@ -68,16 +81,25 @@ export function useAuth() {
     return result
   }
 
-  async function signUp(email: string, password: string) {
+  async function signUp(email: string, password: string, firstName?: string) {
     if (!supabase) throw new Error('Supabase not configured — add credentials to .env.local')
-    const result = await supabase.auth.signUp({ email, password })
+    const result = await supabase.auth.signUp({
+      email,
+      password,
+      options: firstName ? { data: { first_name: firstName } } : undefined,
+    })
     if (result.error) throw result.error
+    if (result.data.user && firstName) {
+      setDisplayName(firstName)
+      await supabase.from('profiles').upsert({ id: result.data.user.id, display_name: firstName })
+    }
     return result
   }
 
   async function signOut() {
     if (supabase) await supabase.auth.signOut()
     setUser(null)
+    setDisplayName(null)
   }
 
   async function pushNow() {
@@ -90,5 +112,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loading, syncing, isConfigured: isConfigured(), signIn, signUp, signOut, pushNow }
+  return { user, displayName, loading, syncing, isConfigured: isConfigured(), signIn, signUp, signOut, pushNow }
 }

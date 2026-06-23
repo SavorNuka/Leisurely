@@ -55,22 +55,23 @@ export function MealGrid({ days }: MealGridProps) {
 
         {/* Day rows */}
         <div className="space-y-2">
-          {days.map((day) => (
+          {days.map((day, dayIndex) => (
             <div key={day.date} className="grid grid-cols-[140px_repeat(4,1fr)] gap-2 items-stretch">
               <div className="flex items-center pr-2">
                 <span className="text-xs font-medium text-olive/70 leading-tight">
                   {formatDayLabel(day.date)}
                 </span>
               </div>
-              {SLOTS.map((slot) => {
+              {SLOTS.map((slot, slotIndex) => {
                 const mealId = day.slots[slot].mealId
                 const dimmed = activeFilters.length > 0 && !mealMatchesFilters(mealId, activeFilters)
+                const isTourTarget = dayIndex === 0 && slotIndex === 0
                 return (
                   <div
                     key={slot}
                     className={`rounded-card transition-opacity ${SLOT_COL_BG[slot]} ${dimmed ? 'opacity-25' : 'opacity-100'}`}
                   >
-                    <MealSlotCell date={day.date} slot={slot} mealId={mealId} />
+                    <MealSlotCell date={day.date} slot={slot} mealId={mealId} isTourTarget={isTourTarget} />
                   </div>
                 )
               })}

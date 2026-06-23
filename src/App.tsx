@@ -6,6 +6,7 @@ import { NotesPage } from './components/notes/NotesPage'
 import { PackingPage } from './components/packing/PackingPage'
 import { SettingsPage } from './components/settings/SettingsPage'
 import { AuthPage } from './components/auth/AuthPage'
+import { JoinPage } from './components/join/JoinPage'
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
           <Route path="/packing" element={<PackingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/join/:token" element={<JoinPage />} />
         </Routes>
       </AppShell>
     </BrowserRouter>
