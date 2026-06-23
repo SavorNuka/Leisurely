@@ -12,7 +12,6 @@ export async function pushPlan(
   if (!isConfigured() || !supabase || !state.plan) return
   const { plan, meals, groceryList } = state
 
-  // Upsert plan row
   await supabase.from('plans').upsert({
     id: plan.id,
     user_id: userId,
@@ -25,7 +24,6 @@ export async function pushPlan(
     created_at: plan.createdAt,
   })
 
-  // Upsert all meals
   const mealRows = Object.values(meals).map((m) => ({
     id: m.id,
     plan_id: plan.id,
@@ -38,7 +36,6 @@ export async function pushPlan(
     await supabase.from('meals').upsert(mealRows)
   }
 
-  // Replace grocery items
   await supabase.from('grocery_items').delete().eq('plan_id', plan.id)
   const groceryRows = groceryList.map((g) => ({
     id: g.id,
@@ -53,18 +50,38 @@ export async function pushPlan(
 
 export async function pushNotes(
   notes: AppState['notes'],
-  userId: string
+  userId: string,
+  planId?: string
 ): Promise<void> {
   if (!isConfigured() || !supabase) return
+
   await supabase.from('notes').delete().eq('user_id', userId)
   const rows = notes.map((n) => ({
     id: n.id,
     user_id: userId,
+    plan_id: planId ?? null,
     text: n.text,
     created_at: n.createdAt,
   }))
   if (rows.length > 0) {
     await supabase.from('notes').insert(rows)
+  }
+
+  const noteIds = notes.map((n) => n.id)
+  if (noteIds.length > 0) {
+    await supabase.from('note_replies').delete().in('note_id', noteIds)
+    const replyRows = notes.flatMap((n) =>
+      (n.replies ?? []).map((r) => ({
+        id: r.id,
+        note_id: n.id,
+        user_id: userId,
+        text: r.text,
+        created_at: r.createdAt,
+      }))
+    )
+    if (replyRows.length > 0) {
+      await supabase.from('note_replies').insert(replyRows)
+    }
   }
 }
 
@@ -89,9 +106,64 @@ export async function pushPackingList(
   }
 }
 
+// ── Note likes ────────────────────────────────────────────────────────────────
+
+export async function toggleNoteLike(
+  noteId: string,
+  userId: string,
+  currentlyLiked: boolean
+): Promise<void> {
+  if (!isConfigured() || !supabase) return
+  if (currentlyLiked) {
+    await supabase.from('note_likes').delete().eq('note_id', noteId).eq('user_id', userId)
+  } else {
+    await supabase.from('note_likes').insert({ note_id: noteId, user_id: userId })
+  }
+}
+
+// ── Plan collaboration ────────────────────────────────────────────────────────
+
+export async function addCollaborator(
+  planId: string,
+  targetUserId: string,
+  invitedBy: string,
+  role: 'editor' | 'viewer' = 'editor'
+): Promise<{ error: string | null }> {
+  if (!isConfigured() || !supabase) return { error: 'Supabase not configured' }
+  const { error } = await supabase.from('plan_collaborators').upsert({
+    plan_id: planId,
+    user_id: targetUserId,
+    invited_by: invitedBy,
+    role,
+  })
+  return { error: error?.message ?? null }
+}
+
+export async function removeCollaborator(planId: string, targetUserId: string): Promise<void> {
+  if (!isConfigured() || !supabase) return
+  await supabase.from('plan_collaborators').delete().eq('plan_id', planId).eq('user_id', targetUserId)
+}
+
+export async function getCollaborators(
+  planId: string
+): Promise<Array<{ userId: string; role: string; joinedAt: string }>> {
+  if (!isConfigured() || !supabase) return []
+  const { data } = await supabase
+    .from('plan_collaborators')
+    .select('user_id, role, joined_at')
+    .eq('plan_id', planId)
+  return (data ?? []).map((r: { user_id: string; role: string; joined_at: string }) => ({
+    userId: r.user_id,
+    role: r.role,
+    joinedAt: r.joined_at,
+  }))
+}
+
 // ── Pull Supabase → local state ───────────────────────────────────────────────
 
-export async function pullFromSupabase(userId: string): Promise<Partial<AppState & { packingList: PackingItem[] }> | null> {
+export async function pullFromSupabase(
+  userId: string
+): Promise<Partial<AppState & { packingList: PackingItem[] }> | null> {
   if (!isConfigured() || !supabase) return null
 
   const [plansRes, mealsRes, groceryRes, notesRes] = await Promise.all([
@@ -122,12 +194,39 @@ export async function pullFromSupabase(userId: string): Promise<Partial<AppState
 
   const groceryList = (groceryRes.data ?? []).map((r: { data: GroceryItem }) => r.data)
 
+  // Pull replies and likes for these notes in parallel
+  const noteIds = (notesRes.data ?? []).map((r: { id: string }) => r.id)
+  const [repliesRes, likesRes] = await Promise.all([
+    noteIds.length > 0
+      ? supabase.from('note_replies').select('*').in('note_id', noteIds).order('created_at', { ascending: true })
+      : Promise.resolve({ data: [] as unknown[] }),
+    noteIds.length > 0
+      ? supabase.from('note_likes').select('note_id, user_id').in('note_id', noteIds)
+      : Promise.resolve({ data: [] as unknown[] }),
+  ])
+
+  const repliesByNoteId: Record<string, Array<{ id: string; text: string; createdAt: string }>> = {}
+  for (const r of repliesRes.data ?? []) {
+    const row = r as { id: string; note_id: string; text: string; created_at: string }
+    if (!repliesByNoteId[row.note_id]) repliesByNoteId[row.note_id] = []
+    repliesByNoteId[row.note_id].push({ id: row.id, text: row.text, createdAt: row.created_at })
+  }
+
+  const likeCountByNoteId: Record<string, number> = {}
+  const likedByMeSet = new Set<string>()
+  for (const r of likesRes.data ?? []) {
+    const row = r as { note_id: string; user_id: string }
+    likeCountByNoteId[row.note_id] = (likeCountByNoteId[row.note_id] ?? 0) + 1
+    if (row.user_id === userId) likedByMeSet.add(row.note_id)
+  }
+
   const notes = (notesRes.data ?? []).map((r: { id: string; text: string; created_at: string }) => ({
     id: r.id,
     text: r.text,
     createdAt: r.created_at,
-    likes: 0,
-    replies: [],
+    likes: likeCountByNoteId[r.id] ?? 0,
+    likedByMe: likedByMeSet.has(r.id),
+    replies: repliesByNoteId[r.id] ?? [],
   }))
 
   const packingRes = await supabase
@@ -167,6 +266,8 @@ export function subscribeToRealtime(
     .on('postgres_changes', { event: '*', schema: 'public', table: 'meals', filter: `plan_id=eq.${planId}` }, onMealChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'grocery_items', filter: `plan_id=eq.${planId}` }, onGroceryChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, onNoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'note_replies' }, onNoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'note_likes' }, onNoteChange)
     .subscribe()
 
   return () => { supabase?.removeChannel(channel) }

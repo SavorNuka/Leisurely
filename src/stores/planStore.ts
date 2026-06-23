@@ -174,7 +174,11 @@ export const usePlanStore = create<PlanStore>()(
     },
 
     likeNote(id) {
-      set((s) => ({ notes: s.notes.map((n) => n.id === id ? { ...n, likes: (n.likes ?? 0) + 1 } : n) }))
+      set((s) => ({
+        notes: s.notes.map((n) => n.id === id
+          ? { ...n, likes: n.likedByMe ? Math.max(0, (n.likes ?? 0) - 1) : (n.likes ?? 0) + 1, likedByMe: !n.likedByMe }
+          : n)
+      }))
     },
 
     addReply(noteId, text) {

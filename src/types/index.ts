@@ -80,6 +80,7 @@ export interface Note {
   text: string
   createdAt: string
   likes: number
+  likedByMe?: boolean
   replies: NoteReply[]
 }
 
