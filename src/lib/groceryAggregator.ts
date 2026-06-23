@@ -29,6 +29,11 @@ export function aggregateIngredients(
           if (!existing.mealIds.includes(mealId)) {
             existing.mealIds.push(mealId)
           }
+          if (meal.assignedTo?.length) {
+            const set = new Set(existing.assignedTo ?? [])
+            for (const name of meal.assignedTo) set.add(name)
+            existing.assignedTo = Array.from(set)
+          }
         } else {
           merged.set(key, {
             id: ingredient.id,
@@ -37,6 +42,7 @@ export function aggregateIngredients(
             unit: ingredient.unit,
             checked: existingChecked.get(key) ?? false,
             mealIds: [mealId],
+            assignedTo: meal.assignedTo?.length ? [...meal.assignedTo] : undefined,
           })
         }
       }

@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import { useGroceryList } from '../../hooks/useGroceryList'
 import { usePlanStore } from '../../stores/planStore'
 import { GroceryList } from './GroceryList'
@@ -6,7 +7,22 @@ import { Button } from '../ui/Button'
 
 export function GroceryPage() {
   const plan = usePlanStore((s) => s.plan)
+  const updateGroceryItemAssignment = usePlanStore((s) => s.updateGroceryItemAssignment)
   const { groceryList, toggleGroceryItem, regenerate } = useGroceryList()
+  const [filterPerson, setFilterPerson] = useState<string | null>(null)
+
+  const allAssignees = useMemo(() => {
+    const names = new Set<string>()
+    for (const item of groceryList) {
+      for (const name of item.assignedTo ?? []) names.add(name)
+    }
+    return Array.from(names).sort()
+  }, [groceryList])
+
+  const visibleItems = useMemo(() => {
+    if (!filterPerson) return groceryList
+    return groceryList.filter((i) => (i.assignedTo ?? []).includes(filterPerson))
+  }, [groceryList, filterPerson])
 
   if (!plan) {
     return (
@@ -44,7 +60,42 @@ export function GroceryPage() {
           Refresh
         </Button>
       </div>
-      <GroceryList items={groceryList} onToggle={toggleGroceryItem} />
+
+      {/* Filter by person */}
+      {allAssignees.length > 0 && (
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-olive/50">Filter:</span>
+          {allAssignees.map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => setFilterPerson(filterPerson === name ? null : name)}
+              className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${
+                filterPerson === name
+                  ? 'bg-sage text-white'
+                  : 'bg-sage/15 text-olive hover:bg-sage/25'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+          {filterPerson && (
+            <button
+              type="button"
+              onClick={() => setFilterPerson(null)}
+              className="text-xs text-olive/40 hover:text-olive transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+
+      <GroceryList
+        items={visibleItems}
+        onToggle={toggleGroceryItem}
+        onAssign={updateGroceryItemAssignment}
+      />
     </div>
   )
 }

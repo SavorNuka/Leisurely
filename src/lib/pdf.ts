@@ -13,9 +13,18 @@ const CREAM: RGB = [245, 240, 232]
 const OLIVE: RGB = [61, 74, 46]
 const TERRA: RGB = [193, 123, 90]
 
-export function exportToPDF(state: AppState) {
+export interface PDFExportOptions {
+  includePlan: boolean
+  includeGrocery: boolean
+  filterAssignees?: string[]
+}
+
+export function exportToPDF(state: AppState, opts: PDFExportOptions = { includePlan: true, includeGrocery: true }) {
   const { plan, meals, groceryList } = state
   if (!plan) return
+
+  const { includePlan, includeGrocery, filterAssignees } = opts
+  const hasAssigneeFilter = filterAssignees && filterAssignees.length > 0
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
@@ -40,67 +49,93 @@ export function exportToPDF(state: AppState) {
   doc.setTextColor(...OLIVE)
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  doc.text(
+  const subtitleParts = [
     `${formatDayLabel(plan.startDate)}  →  ${formatDayLabel(plan.endDate)}   ·   ${plan.days.length} days`,
-    14,
-    34
-  )
+  ]
+  if (hasAssigneeFilter) subtitleParts.push(`Showing: ${filterAssignees!.join(', ')}`)
+  doc.text(subtitleParts.join('   '), 14, 34)
+
+  let currentY = 42
 
   // ── Meal grid ─────────────────────────────────────────────────────
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(...OLIVE)
-  doc.text('Meal Plan', 14, 42)
+  if (includePlan) {
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...OLIVE)
+    doc.text('Meal Plan', 14, currentY)
 
-  const gridHead = [['Day', ...SLOTS.map((s) => MEAL_SLOT_LABELS[s])]]
-  const gridBody = plan.days.map((day) => [
-    formatDayLabel(day.date),
-    ...SLOTS.map((slot) => {
-      const mealId = day.slots[slot].mealId
-      return mealId && meals[mealId] ? meals[mealId].name : ''
-    }),
-  ])
+    const gridHead = [['Day', ...SLOTS.map((s) => MEAL_SLOT_LABELS[s])]]
+    const gridBody = plan.days.map((day) => [
+      formatDayLabel(day.date),
+      ...SLOTS.map((slot) => {
+        const mealId = day.slots[slot].mealId
+        if (!mealId || !meals[mealId]) return ''
+        const meal = meals[mealId]
+        if (hasAssigneeFilter) {
+          const assigned = meal.assignedTo ?? []
+          const overlap = filterAssignees!.some((f) => assigned.includes(f))
+          if (!overlap && assigned.length > 0) return ''
+        }
+        return meal.name
+      }),
+    ])
 
-  autoTable(doc, {
-    startY: 45,
-    head: gridHead,
-    body: gridBody,
-    styles: { fontSize: 8, cellPadding: 2.5, textColor: OLIVE },
-    headStyles: { fillColor: SAGE, textColor: CREAM, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [250, 247, 242] },
-    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 32 } },
-    margin: { left: 14, right: 14 },
-  })
-
-  // ── Grocery list ──────────────────────────────────────────────────
-  const afterGrid = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
-
-  const remaining = doc.internal.pageSize.getHeight() - afterGrid
-  if (remaining < 40) doc.addPage()
-
-  const groceryY = remaining < 40 ? 20 : afterGrid
-
-  doc.setFontSize(11)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(...OLIVE)
-  doc.text('Grocery List', 14, groceryY)
-
-  if (groceryList.length === 0) {
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'italic')
-    doc.setTextColor(150, 150, 140)
-    doc.text('No ingredients added yet.', 14, groceryY + 6)
-  } else {
     autoTable(doc, {
-      startY: groceryY + 3,
-      head: [['Item', 'Quantity', 'Unit']],
-      body: groceryList.map((i) => [i.name, String(i.quantity), i.unit]),
+      startY: currentY + 3,
+      head: gridHead,
+      body: gridBody,
       styles: { fontSize: 8, cellPadding: 2.5, textColor: OLIVE },
-      headStyles: { fillColor: TERRA, textColor: CREAM, fontStyle: 'bold' },
+      headStyles: { fillColor: SAGE, textColor: CREAM, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [250, 247, 242] },
-      columnStyles: { 1: { halign: 'right', cellWidth: 22 }, 2: { cellWidth: 22 } },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 32 } },
       margin: { left: 14, right: 14 },
     })
+
+    currentY = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
+  }
+
+  // ── Grocery list ──────────────────────────────────────────────────
+  if (includeGrocery) {
+    const remaining = doc.internal.pageSize.getHeight() - currentY
+    if (remaining < 40) {
+      doc.addPage()
+      currentY = 20
+    }
+
+    const filteredGrocery = hasAssigneeFilter
+      ? groceryList.filter((i) => {
+          const assigned = i.assignedTo ?? []
+          return assigned.length === 0 || filterAssignees!.some((f) => assigned.includes(f))
+        })
+      : groceryList
+
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...OLIVE)
+    doc.text('Grocery List', 14, currentY)
+
+    if (filteredGrocery.length === 0) {
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'italic')
+      doc.setTextColor(150, 150, 140)
+      doc.text('No ingredients added yet.', 14, currentY + 6)
+    } else {
+      autoTable(doc, {
+        startY: currentY + 3,
+        head: [['Item', 'Quantity', 'Unit', 'Assigned To']],
+        body: filteredGrocery.map((i) => [
+          i.name,
+          String(i.quantity),
+          i.unit,
+          (i.assignedTo ?? []).join(', '),
+        ]),
+        styles: { fontSize: 8, cellPadding: 2.5, textColor: OLIVE },
+        headStyles: { fillColor: TERRA, textColor: CREAM, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [250, 247, 242] },
+        columnStyles: { 1: { halign: 'right', cellWidth: 22 }, 2: { cellWidth: 22 } },
+        margin: { left: 14, right: 14 },
+      })
+    }
   }
 
   // ── Footer ────────────────────────────────────────────────────────
