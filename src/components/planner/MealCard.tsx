@@ -25,7 +25,7 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
         <p className={`font-medium text-olive leading-tight truncate ${compact ? 'text-xs' : 'text-sm'}`}>
           {meal.name}
         </p>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
+        <div className="flex gap-1 opacity-30 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shrink-0">
           <button
             onClick={onEdit}
             aria-label="Edit meal"
@@ -69,7 +69,7 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
             type="button"
             onClick={() => changeServings(-1)}
             disabled={meal.servings <= 1}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 rounded text-olive/40 hover:text-olive hover:bg-olive/10 flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+            className="opacity-40 group-hover:opacity-100 transition-opacity h-4 w-4 rounded text-olive/40 hover:text-olive hover:bg-olive/10 flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
             aria-label="Decrease servings"
           >
             <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
@@ -81,7 +81,7 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
             type="button"
             onClick={() => changeServings(1)}
             disabled={meal.servings >= 50}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 rounded text-olive/40 hover:text-olive hover:bg-olive/10 flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+            className="opacity-40 group-hover:opacity-100 transition-opacity h-4 w-4 rounded text-olive/40 hover:text-olive hover:bg-olive/10 flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
             aria-label="Increase servings"
           >
             <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={2} strokeLinecap="round">

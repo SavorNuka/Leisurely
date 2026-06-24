@@ -51,7 +51,8 @@ export async function pushPlan(
 export async function pushNotes(
   notes: AppState['notes'],
   userId: string,
-  planId?: string
+  planId?: string,
+  displayName?: string
 ): Promise<void> {
   if (!isConfigured() || !supabase) return
 
@@ -62,6 +63,7 @@ export async function pushNotes(
     plan_id: planId ?? null,
     text: n.text,
     created_at: n.createdAt,
+    author_name: n.authorName ?? displayName ?? null,
   }))
   if (rows.length > 0) {
     await supabase.from('notes').insert(rows)
@@ -77,6 +79,7 @@ export async function pushNotes(
         user_id: userId,
         text: r.text,
         created_at: r.createdAt,
+        author_name: r.authorName ?? displayName ?? null,
       }))
     )
     if (replyRows.length > 0) {
@@ -205,11 +208,11 @@ export async function pullFromSupabase(
       : Promise.resolve({ data: [] as unknown[] }),
   ])
 
-  const repliesByNoteId: Record<string, Array<{ id: string; text: string; createdAt: string }>> = {}
+  const repliesByNoteId: Record<string, Array<{ id: string; text: string; createdAt: string; authorName?: string }>> = {}
   for (const r of repliesRes.data ?? []) {
-    const row = r as { id: string; note_id: string; text: string; created_at: string }
+    const row = r as { id: string; note_id: string; text: string; created_at: string; author_name?: string }
     if (!repliesByNoteId[row.note_id]) repliesByNoteId[row.note_id] = []
-    repliesByNoteId[row.note_id].push({ id: row.id, text: row.text, createdAt: row.created_at })
+    repliesByNoteId[row.note_id].push({ id: row.id, text: row.text, createdAt: row.created_at, authorName: row.author_name ?? undefined })
   }
 
   const likeCountByNoteId: Record<string, number> = {}
@@ -220,13 +223,14 @@ export async function pullFromSupabase(
     if (row.user_id === userId) likedByMeSet.add(row.note_id)
   }
 
-  const notes = (notesRes.data ?? []).map((r: { id: string; text: string; created_at: string }) => ({
+  const notes = (notesRes.data ?? []).map((r: { id: string; text: string; created_at: string; author_name?: string }) => ({
     id: r.id,
     text: r.text,
     createdAt: r.created_at,
     likes: likeCountByNoteId[r.id] ?? 0,
     likedByMe: likedByMeSet.has(r.id),
     replies: repliesByNoteId[r.id] ?? [],
+    authorName: r.author_name ?? undefined,
   }))
 
   const packingRes = await supabase

@@ -67,8 +67,8 @@ export function CollaboratorRoster() {
         </div>
 
         <div className="divide-y divide-olive/10">
-          {collabs.map((c) => {
-            const label = c.displayName ?? c.userId.slice(0, 8)
+          {collabs.map((c, idx) => {
+            const label = c.displayName ?? `Member ${idx + 1}`
             const isMe = c.userId === user.id
             const isOwner = c.role === 'owner'
             const hue = avatarHue(label)
@@ -84,6 +84,9 @@ export function CollaboratorRoster() {
                   <p className="text-sm text-olive truncate">
                     {label}{isMe ? ' (you)' : ''}
                   </p>
+                  {!c.displayName && !isMe && (
+                    <p className="text-xs text-olive/35">Ask them to set a display name in Settings</p>
+                  )}
                 </div>
                 <span className="text-xs text-olive/40 capitalize shrink-0">{c.role}</span>
                 {!isOwner && !isMe && (

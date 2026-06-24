@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { listSnapshots, loadSnapshot, deleteSnapshot } from '../lib/db'
 import { usePlanStore } from '../stores/planStore'
+import { toast } from './useToast'
 import type { TripStub } from '../types'
 
 export function useTripHistory() {
@@ -37,7 +38,12 @@ export function useTripHistory() {
   }
 
   async function archiveCurrent() {
-    await snapshotCurrent()
+    try {
+      await snapshotCurrent()
+    } catch {
+      toast('Could not archive trip — storage may be full', 'error')
+      return
+    }
     clearPlan()
     await reload()
   }

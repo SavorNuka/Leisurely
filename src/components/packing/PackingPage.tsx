@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { usePacking } from '../../hooks/usePacking'
 import { usePlanStore } from '../../stores/planStore'
+import { useUIStore } from '../../stores/uiStore'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import { PACKING_CATEGORY_LABELS, PACKING_CATEGORY_EMOJI, type PackingCategory, type PackingItem } from '../../types'
@@ -22,7 +23,8 @@ export function PackingPage() {
   const [newCategory, setNewCategory] = useState<PackingCategory>('misc')
   const [activeCategory, setActiveCategory] = useState<PackingCategory>('clothes')
   const [showSuggestions, setShowSuggestions] = useState(packingList.length === 0)
-  const [filterPerson, setFilterPerson] = useState<string | null>(null)
+  const filterPerson = useUIStore((s) => s.packingFilter)
+  const setFilterPerson = useUIStore((s) => s.setPackingFilter)
 
   const allAssignees = useMemo(() => {
     const names = new Set<string>()
@@ -243,6 +245,7 @@ function PackingItemRow({ item, onToggle, onRemove, onAssign }: PackingItemRowPr
           type="checkbox"
           checked={item.packed}
           onChange={onToggle}
+          aria-label={`Mark ${item.text} as ${item.packed ? 'unpacked' : 'packed'}`}
           className="h-4 w-4 rounded border-olive/30 text-sage focus:ring-sage shrink-0"
         />
         <span className={`flex-1 text-sm ${item.packed ? 'line-through text-olive/30' : 'text-olive'}`}>
@@ -250,8 +253,8 @@ function PackingItemRow({ item, onToggle, onRemove, onAssign }: PackingItemRowPr
         </span>
         <button
           onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/30 hover:text-red-400 rounded p-1 shrink-0"
-          aria-label="Remove item"
+          className="text-olive/30 hover:text-red-400 transition-colors rounded p-1 shrink-0"
+          aria-label={`Remove ${item.text}`}
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
             <line x1="3" y1="3" x2="11" y2="11" /><line x1="11" y1="3" x2="3" y2="11" />
@@ -293,6 +296,7 @@ function PackingItemRow({ item, onToggle, onRemove, onAssign }: PackingItemRowPr
           <button
             type="button"
             onClick={() => setAddingAssignee(true)}
+            aria-label={`Assign ${item.text} to someone`}
             className="text-xs text-olive/30 hover:text-sage transition-colors opacity-0 group-hover:opacity-100"
           >
             + assign

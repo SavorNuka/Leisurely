@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, type RefObject } from 'react'
 import { useGroceryList } from '../../hooks/useGroceryList'
 import { usePlanStore } from '../../stores/planStore'
+import { useUIStore } from '../../stores/uiStore'
 import { GroceryCategoryList } from './GroceryCategoryList'
 import { EmptyState } from '../ui/EmptyState'
 import { Button } from '../ui/Button'
@@ -11,7 +12,8 @@ export function GroceryPage() {
   const addManualGroceryItem = usePlanStore((s) => s.addManualGroceryItem)
   const removeGroceryItem = usePlanStore((s) => s.removeGroceryItem)
   const { groceryList, toggleGroceryItem, regenerate } = useGroceryList()
-  const [filterPerson, setFilterPerson] = useState<string | null>(null)
+  const filterPerson = useUIStore((s) => s.groceryFilter)
+  const setFilterPerson = useUIStore((s) => s.setGroceryFilter)
   const [addName, setAddName] = useState('')
   const [addQty, setAddQty] = useState('1')
   const [addUnit, setAddUnit] = useState('')

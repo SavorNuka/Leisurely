@@ -51,11 +51,11 @@ function TripRow({ stub, onSwitch, onDelete, loading }: TripRowProps) {
         ) : (
           <>
             <Button variant="ghost" size="sm" onClick={onSwitch} disabled={loading}>
-              Switch to
+              {loading ? <Spinner /> : 'Switch to'}
             </Button>
             <button
               onClick={() => setConfirmDelete(true)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/30 hover:text-red-400 p-1 rounded"
+              className="text-olive/30 hover:text-red-400 transition-colors p-1 rounded"
               aria-label="Delete trip"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
@@ -75,6 +75,7 @@ interface TripSwitcherProps {
 
 export function TripSwitcher({ trigger = 'link' }: TripSwitcherProps) {
   const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
   const plan = usePlanStore((s) => s.plan)
   const { stubs, loading, switchTo, archiveCurrent, deleteTrip } = useTripHistory()
 
@@ -99,7 +100,8 @@ export function TripSwitcher({ trigger = 'link' }: TripSwitcherProps) {
           stubs={stubs}
           upcomingStubs={upcomingStubs}
           pastStubs={pastStubs}
-          loading={loading}
+          loading={loading || busy}
+          setBusy={setBusy}
           switchTo={switchTo}
           archiveCurrent={archiveCurrent}
           deleteTrip={deleteTrip}
@@ -123,7 +125,8 @@ export function TripSwitcher({ trigger = 'link' }: TripSwitcherProps) {
         stubs={stubs}
         upcomingStubs={upcomingStubs}
         pastStubs={pastStubs}
-        loading={loading}
+        loading={loading || busy}
+        setBusy={setBusy}
         switchTo={switchTo}
         archiveCurrent={archiveCurrent}
         deleteTrip={deleteTrip}
@@ -140,24 +143,44 @@ interface ModalProps {
   upcomingStubs: TripStub[]
   pastStubs: TripStub[]
   loading: boolean
+  setBusy: (b: boolean) => void
   switchTo: (s: TripStub) => Promise<void>
   archiveCurrent: () => Promise<void>
   deleteTrip: (id: string) => Promise<void>
 }
 
+function Spinner() {
+  return (
+    <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+      <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" className="opacity-25" />
+      <path d="M8 2a6 6 0 016 6" className="opacity-75" />
+    </svg>
+  )
+}
+
 function TripSwitcherModal({
-  open, onClose, plan, upcomingStubs, pastStubs, loading, switchTo, archiveCurrent, deleteTrip,
+  open, onClose, plan, upcomingStubs, pastStubs, loading, setBusy, switchTo, archiveCurrent, deleteTrip,
 }: ModalProps) {
   const [showPast, setShowPast] = useState(false)
 
   async function handleSwitchTo(stub: TripStub) {
-    await switchTo(stub)
-    onClose()
+    setBusy(true)
+    try {
+      await switchTo(stub)
+      onClose()
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function handleArchive() {
-    await archiveCurrent()
-    onClose()
+    setBusy(true)
+    try {
+      await archiveCurrent()
+      onClose()
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -173,7 +196,7 @@ function TripSwitcherModal({
                 <p className="text-xs text-olive/50">{dateRange(plan.startDate, plan.endDate)}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleArchive} disabled={loading}>
-                Archive
+                {loading ? <Spinner /> : 'Archive'}
               </Button>
             </div>
           </div>

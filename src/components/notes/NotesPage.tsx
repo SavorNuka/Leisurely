@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { format, parseISO } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePlanStore } from '../../stores/planStore'
+import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
 import type { Note } from '../../types'
@@ -25,6 +26,8 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
     setReplyOpen(false)
   }
 
+  const authorLabel = note.authorName ?? null
+
   const replyCount = note.replies?.length ?? 0
   const liked = (note.likes ?? 0) > 0
 
@@ -33,6 +36,9 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
       <div className="flex">
         <div className="w-1 shrink-0 bg-terracotta/50 rounded-l-card" />
         <div className="flex-1 p-4">
+          {authorLabel && (
+            <p className="text-xs text-olive/40 mb-1">{authorLabel}</p>
+          )}
           <p className="text-sm text-olive whitespace-pre-wrap leading-relaxed pr-8">{note.text}</p>
           <div className="flex items-center justify-between mt-2">
             <time className="text-xs text-olive/40">
@@ -97,6 +103,9 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
                 <div key={reply.id} className="group flex gap-2.5">
                   <div className="w-px bg-olive/15 shrink-0 mt-1" />
                   <div className="flex-1 min-w-0">
+                    {reply.authorName && (
+                      <p className="text-xs text-olive/35 mb-0.5">{reply.authorName}</p>
+                    )}
                     <p className="text-xs text-olive leading-relaxed whitespace-pre-wrap">{reply.text}</p>
                     <div className="flex items-center justify-between mt-1">
                       <time className="text-xs text-olive/35">
@@ -105,7 +114,7 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
                       <button
                         onClick={() => onRemoveReply(reply.id)}
                         aria-label="Delete reply"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/25 hover:text-red-400 rounded p-0.5"
+                        className="text-olive/25 hover:text-red-400 transition-colors rounded p-0.5"
                       >
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
                           <line x1="3" y1="3" x2="9" y2="9" /><line x1="9" y1="3" x2="3" y2="9" />
@@ -146,12 +155,13 @@ export function NotesPage() {
   const likeNote = usePlanStore((s) => s.likeNote)
   const addReply = usePlanStore((s) => s.addReply)
   const removeReply = usePlanStore((s) => s.removeReply)
+  const { displayName } = useAuth()
   const [text, setText] = useState('')
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    addNote(text)
+    addNote(text, displayName ?? undefined)
     setText('')
   }
 
@@ -204,7 +214,7 @@ export function NotesPage() {
                 <NoteCard
                   note={note}
                   onLike={() => likeNote(note.id)}
-                  onAddReply={(t) => addReply(note.id, t)}
+                  onAddReply={(t) => addReply(note.id, t, displayName ?? undefined)}
                   onRemoveReply={(rid) => removeReply(note.id, rid)}
                   onDelete={() => removeNote(note.id)}
                 />

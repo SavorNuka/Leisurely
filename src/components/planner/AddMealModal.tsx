@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Modal } from '../ui/Modal'
 import { Input, Textarea } from '../ui/Input'
 import { Button } from '../ui/Button'
@@ -6,8 +6,9 @@ import { DietaryTagBadge } from './DietaryTagBadge'
 import { RecipeBrowser } from './RecipeBrowser'
 import { usePlanStore } from '../../stores/planStore'
 import { PRESET_DIETARY_TAGS, type DietaryTag, type Meal, type MealSlotKey, type GroceryItem, type Recipe } from '../../types'
-import { saveCustomRecipe } from '../../lib/db'
+import { saveCustomRecipe, loadCustomRecipes } from '../../lib/db'
 import { toast } from '../../hooks/useToast'
+import recipes from '../../data/recipes.json'
 
 interface IngredientRow {
   id: string
@@ -33,6 +34,10 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
   const updateMeal = usePlanStore((s) => s.updateMeal)
   const assignMealToSlot = usePlanStore((s) => s.assignMealToSlot)
   const regenerateGroceryList = usePlanStore((s) => s.regenerateGroceryList)
+
+  const [customCount, setCustomCount] = useState(0)
+  useEffect(() => { loadCustomRecipes().then((r) => setCustomCount(r.length)) }, [open])
+  const totalRecipes = (recipes as unknown[]).length + customCount
 
   const [showRecipes, setShowRecipes] = useState(!editingMeal)
   const [name, setName] = useState(editingMeal?.name ?? '')
@@ -152,7 +157,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
                 <path d="M6 4l4 4-4 4" />
               </svg>
               Browse recipes
-              <span className="ml-auto text-xs text-olive/40 font-normal">18 ideas</span>
+              <span className="ml-auto text-xs text-olive/40 font-normal">{totalRecipes} ideas</span>
             </button>
             {showRecipes && <RecipeBrowser onSelect={applyRecipe} />}
           </div>

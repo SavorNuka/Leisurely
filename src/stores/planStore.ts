@@ -40,10 +40,10 @@ interface PlanStore extends AppState {
   saveCurrentAndSwitch: (targetState: AppState) => void
 
   // Note actions
-  addNote: (text: string) => void
+  addNote: (text: string, authorName?: string) => void
   removeNote: (id: string) => void
   likeNote: (id: string) => void
-  addReply: (noteId: string, text: string) => void
+  addReply: (noteId: string, text: string, authorName?: string) => void
   removeReply: (noteId: string, replyId: string) => void
 
   // Packing actions
@@ -218,8 +218,8 @@ export const usePlanStore = create<PlanStore>()(
       get().importState(targetState)
     },
 
-    addNote(text) {
-      const note: Note = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), likes: 0, replies: [] }
+    addNote(text, authorName) {
+      const note: Note = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), likes: 0, replies: [], authorName }
       set((s) => ({ notes: [note, ...s.notes] }))
     },
 
@@ -235,8 +235,8 @@ export const usePlanStore = create<PlanStore>()(
       }))
     },
 
-    addReply(noteId, text) {
-      const reply: NoteReply = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString() }
+    addReply(noteId, text, authorName) {
+      const reply: NoteReply = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), authorName }
       set((s) => ({
         notes: s.notes.map((n) => n.id === noteId ? { ...n, replies: [...(n.replies ?? []), reply] } : n)
       }))
