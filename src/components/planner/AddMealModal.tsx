@@ -38,12 +38,25 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
   const [servings, setServings] = useState(String(editingMeal?.servings ?? 2))
   const [selectedTags, setSelectedTags] = useState<DietaryTag[]>(editingMeal?.dietaryTags ?? [])
   const [allergyInput, setAllergyInput] = useState('')
+  const [assignedTo, setAssignedTo] = useState<string[]>(editingMeal?.assignedTo ?? [])
+  const [assigneeInput, setAssigneeInput] = useState('')
   const [ingredients, setIngredients] = useState<IngredientRow[]>(
     editingMeal?.ingredients?.length
       ? editingMeal.ingredients.map((i) => ({ id: i.id, name: i.name, quantity: String(i.quantity), unit: i.unit }))
       : [emptyRow()]
   )
   const [nameError, setNameError] = useState('')
+
+  function addAssignee() {
+    const val = assigneeInput.trim()
+    if (!val) return
+    if (!assignedTo.includes(val)) setAssignedTo((prev) => [...prev, val])
+    setAssigneeInput('')
+  }
+
+  function removeAssignee(name: string) {
+    setAssignedTo((prev) => prev.filter((n) => n !== name))
+  }
 
   function applyRecipe(recipe: Recipe) {
     setName(recipe.name)
@@ -100,7 +113,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
       }))
 
     if (editingMeal) {
-      updateMeal(editingMeal.id, { name: name.trim(), notes: notes.trim(), servings: parseInt(servings) || 1, dietaryTags: selectedTags, ingredients: parsedIngredients })
+      updateMeal(editingMeal.id, { name: name.trim(), notes: notes.trim(), servings: parseInt(servings) || 1, dietaryTags: selectedTags, ingredients: parsedIngredients, assignedTo: assignedTo.length ? assignedTo : undefined })
       regenerateGroceryList()
     } else {
       const meal: Meal = {
@@ -110,6 +123,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
         servings: parseInt(servings) || 1,
         dietaryTags: selectedTags,
         ingredients: parsedIngredients,
+        assignedTo: assignedTo.length ? assignedTo : undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
@@ -145,6 +159,33 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
         <Input id="meal-name" label="Meal name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Caprese salad" error={nameError} autoFocus={!!editingMeal} />
         <Textarea id="meal-notes" label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Prep notes, restaurant name, etc." rows={2} />
         <Input id="meal-servings" label="Servings" type="number" min={1} max={50} value={servings} onChange={(e) => setServings(e.target.value)} />
+
+        {/* Who's responsible */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-olive">Who's cooking / responsible</p>
+          <div className="flex gap-2 items-center">
+            <input
+              className="flex-1 min-w-0 rounded-card border border-olive/20 bg-white px-3 py-1.5 text-sm text-olive placeholder:text-olive/40 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
+              placeholder="Add a name…"
+              value={assigneeInput}
+              onChange={(e) => setAssigneeInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAssignee() } }}
+            />
+            <Button type="button" variant="ghost" size="sm" onClick={addAssignee}>Add</Button>
+          </div>
+          {assignedTo.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {assignedTo.map((n) => (
+                <span key={n} className="inline-flex items-center gap-1 rounded-full bg-sage/15 px-2.5 py-0.5 text-xs font-medium text-olive">
+                  {n}
+                  <button type="button" onClick={() => removeAssignee(n)} className="text-olive/40 hover:text-red-400 transition-colors" aria-label={`Remove ${n}`}>
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Dietary tags */}
         <div className="space-y-2">

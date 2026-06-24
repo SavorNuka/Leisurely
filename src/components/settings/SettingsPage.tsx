@@ -4,12 +4,14 @@ import { SharePlan } from './SharePlan'
 import { PdfExport } from './PdfExport'
 import { usePlan } from '../../hooks/usePlan'
 import { useTour } from '../tour/TourProvider'
+import { usePWAInstall } from '../../hooks/usePWAInstall'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 
 export function SettingsPage() {
   const { plan, clearPlan } = usePlan()
   const { startTour } = useTour()
+  const { canPrompt, install, isStandalone, isIOS } = usePWAInstall()
   const [confirmClear, setConfirmClear] = useState(false)
 
   return (
@@ -19,6 +21,35 @@ export function SettingsPage() {
       <SharePlan />
       <PdfExport />
       <ExportImport />
+
+      {/* Install App */}
+      <div className="bg-white rounded-card shadow-card p-5 space-y-3">
+        <div>
+          <h3 className="font-serif text-base font-semibold text-olive mb-1">Install App</h3>
+          <p className="text-xs text-olive/60">
+            Install Leisurely on your device for quick access — works offline too.
+          </p>
+        </div>
+        {isStandalone ? (
+          <p className="text-sm text-sage font-medium">Leisurely is installed ✓</p>
+        ) : canPrompt ? (
+          <Button variant="ghost" size="sm" onClick={install}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 3v10M6 9l4 4 4-4" />
+              <path d="M3 17h14" />
+            </svg>
+            Install Leisurely
+          </Button>
+        ) : isIOS ? (
+          <p className="text-xs text-olive/70 leading-relaxed">
+            Tap the <strong>Share</strong> icon in Safari, then choose <strong>"Add to Home Screen"</strong>.
+          </p>
+        ) : (
+          <p className="text-xs text-olive/70 leading-relaxed">
+            Open your browser menu and select <strong>"Install app"</strong> or <strong>"Add to Home Screen"</strong> to install Leisurely.
+          </p>
+        )}
+      </div>
 
       {/* Tour */}
       <div className="bg-white rounded-card shadow-card p-5 space-y-3">

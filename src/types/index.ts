@@ -36,6 +36,7 @@ export interface GroceryItem {
   unit: string
   checked: boolean
   mealIds: string[]
+  assignedTo?: string[]
 }
 
 export interface Meal {
@@ -45,6 +46,7 @@ export interface Meal {
   servings: number
   dietaryTags: DietaryTag[]
   ingredients: GroceryItem[]
+  assignedTo?: string[]
   createdAt: string
   updatedAt: string
 }

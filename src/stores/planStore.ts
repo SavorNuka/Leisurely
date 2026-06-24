@@ -30,6 +30,7 @@ interface PlanStore extends AppState {
   // Grocery actions
   regenerateGroceryList: () => void
   toggleGroceryItem: (id: string) => void
+  updateGroceryItemAssignment: (id: string, assignedTo: string[]) => void
 
   // Note actions
   addNote: (text: string) => void
@@ -160,6 +161,14 @@ export const usePlanStore = create<PlanStore>()(
       set((s) => ({
         groceryList: s.groceryList.map((item) =>
           item.id === id ? { ...item, checked: !item.checked } : item
+        ),
+      }))
+    },
+
+    updateGroceryItemAssignment(id, assignedTo) {
+      set((s) => ({
+        groceryList: s.groceryList.map((item) =>
+          item.id === id ? { ...item, assignedTo: assignedTo.length ? assignedTo : undefined } : item
         ),
       }))
     },
