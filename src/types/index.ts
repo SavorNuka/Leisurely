@@ -37,6 +37,7 @@ export interface GroceryItem {
   checked: boolean
   mealIds: string[]
   assignedTo?: string[]
+  manual?: true
 }
 
 export interface Meal {
@@ -118,6 +119,14 @@ export interface AppState {
   groceryList: GroceryItem[]
   notes: Note[]
   packingList: PackingItem[]
+}
+
+export interface TripStub {
+  planId: string
+  name: string
+  startDate: string
+  endDate: string
+  savedAt: string
 }
 
 // Recipe (from local JSON database)

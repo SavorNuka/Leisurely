@@ -5,9 +5,10 @@ interface GroceryListProps {
   items: GroceryItemType[]
   onToggle: (id: string) => void
   onAssign?: (id: string, names: string[]) => void
+  onRemove?: (id: string) => void
 }
 
-export function GroceryList({ items, onToggle, onAssign }: GroceryListProps) {
+export function GroceryList({ items, onToggle, onAssign, onRemove }: GroceryListProps) {
   const unchecked = items.filter((i) => !i.checked)
   const checked = items.filter((i) => i.checked)
 
@@ -19,6 +20,7 @@ export function GroceryList({ items, onToggle, onAssign }: GroceryListProps) {
           item={item}
           onToggle={() => onToggle(item.id)}
           onAssign={onAssign ? (names) => onAssign(item.id, names) : undefined}
+          onRemove={item.manual && onRemove ? () => onRemove(item.id) : undefined}
         />
       ))}
       {checked.length > 0 && unchecked.length > 0 && (
@@ -32,6 +34,7 @@ export function GroceryList({ items, onToggle, onAssign }: GroceryListProps) {
           item={item}
           onToggle={() => onToggle(item.id)}
           onAssign={onAssign ? (names) => onAssign(item.id, names) : undefined}
+          onRemove={item.manual && onRemove ? () => onRemove(item.id) : undefined}
         />
       ))}
     </div>

@@ -5,9 +5,10 @@ interface GroceryItemProps {
   item: GroceryItemType
   onToggle: () => void
   onAssign?: (names: string[]) => void
+  onRemove?: () => void
 }
 
-export function GroceryItem({ item, onToggle, onAssign }: GroceryItemProps) {
+export function GroceryItem({ item, onToggle, onAssign, onRemove }: GroceryItemProps) {
   const [addingAssignee, setAddingAssignee] = useState(false)
   const [assigneeInput, setAssigneeInput] = useState('')
 
@@ -39,10 +40,25 @@ export function GroceryItem({ item, onToggle, onAssign }: GroceryItemProps) {
         />
         <span className={`flex-1 text-sm ${item.checked ? 'line-through text-olive/40' : 'text-olive'}`}>
           {item.name}
+          {item.manual && (
+            <span className="ml-1.5 text-xs text-olive/30" title="Manually added">✍</span>
+          )}
         </span>
         <span className={`text-xs tabular-nums ${item.checked ? 'text-olive/30' : 'text-olive/60'}`}>
           {qtyLabel}
         </span>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-olive/25 hover:text-red-400 transition-colors p-1 rounded shrink-0"
+            aria-label="Remove item"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+              <line x1="3" y1="3" x2="11" y2="11"/><line x1="11" y1="3" x2="3" y2="11"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Assignees row */}

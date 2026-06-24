@@ -3,7 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware'
 import type { Plan, Meal, GroceryItem, MealSlotKey, Note, NoteReply, PackingItem, PackingCategory, DietaryTag, AppState } from '../types'
 import { mergeDayPlans } from '../lib/dateUtils'
 import { aggregateIngredients } from '../lib/groceryAggregator'
-import { savePlan, saveMeals, saveGroceryList, saveNotes, savePackingList, clearPlanFromDB } from '../lib/db'
+import { savePlan, saveMeals, saveGroceryList, saveNotes, savePackingList, clearPlanFromDB, saveSnapshot } from '../lib/db'
 
 interface PlanStore extends AppState {
   // Diet filter (client-only, not persisted)
@@ -31,6 +31,12 @@ interface PlanStore extends AppState {
   regenerateGroceryList: () => void
   toggleGroceryItem: (id: string) => void
   updateGroceryItemAssignment: (id: string, assignedTo: string[]) => void
+  addManualGroceryItem: (name: string, quantity: number, unit: string) => void
+  removeGroceryItem: (id: string) => void
+
+  // Trip snapshot actions
+  snapshotCurrent: () => Promise<void>
+  saveCurrentAndSwitch: (targetState: AppState) => void
 
   // Note actions
   addNote: (text: string) => void
@@ -154,7 +160,9 @@ export const usePlanStore = create<PlanStore>()(
     regenerateGroceryList() {
       const { meals, plan, groceryList } = get()
       if (!plan) return
-      set({ groceryList: aggregateIngredients(meals, plan.days, groceryList) })
+      const manualItems = groceryList.filter((i) => i.manual)
+      const aggregated = aggregateIngredients(meals, plan.days, groceryList)
+      set({ groceryList: [...aggregated, ...manualItems] })
     },
 
     toggleGroceryItem(id) {
@@ -171,6 +179,39 @@ export const usePlanStore = create<PlanStore>()(
           item.id === id ? { ...item, assignedTo: assignedTo.length ? assignedTo : undefined } : item
         ),
       }))
+    },
+
+    addManualGroceryItem(name, quantity, unit) {
+      const item: GroceryItem = {
+        id: crypto.randomUUID(),
+        name: name.trim(),
+        quantity,
+        unit: unit.trim(),
+        checked: false,
+        mealIds: [],
+        manual: true,
+      }
+      set((s) => ({ groceryList: [...s.groceryList, item] }))
+    },
+
+    removeGroceryItem(id) {
+      set((s) => ({ groceryList: s.groceryList.filter((i) => i.id !== id) }))
+    },
+
+    async snapshotCurrent() {
+      const { plan } = get()
+      if (!plan) return
+      const state = get().exportState()
+      await saveSnapshot(plan.id, { name: plan.name, startDate: plan.startDate, endDate: plan.endDate }, state)
+    },
+
+    saveCurrentAndSwitch(targetState) {
+      const { plan } = get()
+      if (plan) {
+        const state = get().exportState()
+        saveSnapshot(plan.id, { name: plan.name, startDate: plan.startDate, endDate: plan.endDate }, state)
+      }
+      get().importState(targetState)
     },
 
     addNote(text) {
