@@ -1,5 +1,6 @@
 import type { Meal } from '../../types'
 import { DietaryTagBadge } from './DietaryTagBadge'
+import { usePlanStore } from '../../stores/planStore'
 
 interface MealCardProps {
   meal: Meal
@@ -9,6 +10,15 @@ interface MealCardProps {
 }
 
 export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardProps) {
+  const updateMeal = usePlanStore((s) => s.updateMeal)
+  const regenerateGroceryList = usePlanStore((s) => s.regenerateGroceryList)
+
+  function changeServings(delta: number) {
+    const next = Math.max(1, Math.min(50, meal.servings + delta))
+    updateMeal(meal.id, { servings: next })
+    regenerateGroceryList()
+  }
+
   return (
     <div className="group relative bg-cream rounded-card shadow-card p-2.5 flex flex-col gap-1 min-w-0">
       <div className="flex items-start justify-between gap-1">
@@ -54,7 +64,31 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
       )}
 
       {!compact && (
-        <p className="text-xs text-olive/40 mt-0.5">Serves {meal.servings}</p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <button
+            type="button"
+            onClick={() => changeServings(-1)}
+            disabled={meal.servings <= 1}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 rounded text-olive/40 hover:text-olive hover:bg-olive/10 flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+            aria-label="Decrease servings"
+          >
+            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <line x1="2" y1="5" x2="8" y2="5"/>
+            </svg>
+          </button>
+          <span className="text-xs text-olive/40">Serves {meal.servings}</span>
+          <button
+            type="button"
+            onClick={() => changeServings(1)}
+            disabled={meal.servings >= 50}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 rounded text-olive/40 hover:text-olive hover:bg-olive/10 flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed shrink-0"
+            aria-label="Increase servings"
+          >
+            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+              <line x1="5" y1="2" x2="5" y2="8"/><line x1="2" y1="5" x2="8" y2="5"/>
+            </svg>
+          </button>
+        </div>
       )}
     </div>
   )

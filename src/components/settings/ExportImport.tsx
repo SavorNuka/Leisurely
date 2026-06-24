@@ -3,7 +3,7 @@ import { useExportImport } from '../../hooks/useExportImport'
 import { Button } from '../ui/Button'
 
 export function ExportImport() {
-  const { handleExport, handleImport, importError, importSuccess } = useExportImport()
+  const { handleExport, handleImport } = useExportImport()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   return (
@@ -43,14 +43,6 @@ export function ExportImport() {
         />
       </div>
 
-      {importError && (
-        <p className="text-xs text-red-500 bg-red-50 rounded-card px-3 py-2">{importError}</p>
-      )}
-      {importSuccess && (
-        <p className="text-xs text-sage-dark bg-sage/10 rounded-card px-3 py-2">
-          Plan imported successfully!
-        </p>
-      )}
     </div>
   )
 }

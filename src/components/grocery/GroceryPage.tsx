@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, type RefObject } from 'react'
 import { useGroceryList } from '../../hooks/useGroceryList'
 import { usePlanStore } from '../../stores/planStore'
-import { GroceryList } from './GroceryList'
+import { GroceryCategoryList } from './GroceryCategoryList'
 import { EmptyState } from '../ui/EmptyState'
 import { Button } from '../ui/Button'
 
@@ -114,7 +114,7 @@ export function GroceryPage() {
         </div>
       )}
 
-      <GroceryList
+      <GroceryCategoryList
         items={visibleItems}
         onToggle={toggleGroceryItem}
         onAssign={updateGroceryItemAssignment}

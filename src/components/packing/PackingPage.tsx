@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { usePacking } from '../../hooks/usePacking'
+import { usePlanStore } from '../../stores/planStore'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
-import { PACKING_CATEGORY_LABELS, PACKING_CATEGORY_EMOJI, type PackingCategory } from '../../types'
+import { PACKING_CATEGORY_LABELS, PACKING_CATEGORY_EMOJI, type PackingCategory, type PackingItem } from '../../types'
 
 const CATEGORIES: PackingCategory[] = ['clothes', 'toiletries', 'documents', 'kitchen', 'misc']
 
@@ -16,10 +17,25 @@ const SUGGESTIONS: Record<PackingCategory, string[]> = {
 
 export function PackingPage() {
   const { packingList, packedCount, addPackingItem, togglePackingItem, removePackingItem, clearPackedItems } = usePacking()
+  const updatePackingItemAssignment = usePlanStore((s) => s.updatePackingItemAssignment)
   const [newText, setNewText] = useState('')
   const [newCategory, setNewCategory] = useState<PackingCategory>('misc')
   const [activeCategory, setActiveCategory] = useState<PackingCategory>('clothes')
   const [showSuggestions, setShowSuggestions] = useState(packingList.length === 0)
+  const [filterPerson, setFilterPerson] = useState<string | null>(null)
+
+  const allAssignees = useMemo(() => {
+    const names = new Set<string>()
+    for (const item of packingList) {
+      for (const name of item.assignedTo ?? []) names.add(name)
+    }
+    return Array.from(names).sort()
+  }, [packingList])
+
+  const visibleList = useMemo(() => {
+    if (!filterPerson) return packingList
+    return packingList.filter((i) => (i.assignedTo ?? []).includes(filterPerson))
+  }, [packingList, filterPerson])
 
   function handleAdd() {
     const text = newText.trim()
@@ -54,6 +70,36 @@ export function PackingPage() {
           </Button>
         )}
       </div>
+
+      {/* Filter by person */}
+      {allAssignees.length > 0 && (
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs text-olive/50">Filter:</span>
+          {allAssignees.map((name) => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => setFilterPerson(filterPerson === name ? null : name)}
+              className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${
+                filterPerson === name
+                  ? 'bg-sage text-white'
+                  : 'bg-sage/15 text-olive hover:bg-sage/25'
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+          {filterPerson && (
+            <button
+              type="button"
+              onClick={() => setFilterPerson(null)}
+              className="text-xs text-olive/40 hover:text-olive transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Add item */}
       <div className="bg-white rounded-card shadow-card p-4 space-y-3">
@@ -136,7 +182,7 @@ export function PackingPage() {
       ) : (
         <div className="space-y-4">
           {CATEGORIES.map((cat) => {
-            const items = packingList.filter((i) => i.category === cat)
+            const items = visibleList.filter((i) => i.category === cat)
             if (items.length === 0) return null
             return (
               <div key={cat} className="bg-white rounded-card shadow-card overflow-hidden">
@@ -147,26 +193,13 @@ export function PackingPage() {
                 </div>
                 <div className="divide-y divide-olive/10">
                   {items.map((item) => (
-                    <div key={item.id} className="group flex items-center gap-3 px-4 py-2.5 hover:bg-olive/5">
-                      <input
-                        type="checkbox"
-                        checked={item.packed}
-                        onChange={() => togglePackingItem(item.id)}
-                        className="h-4 w-4 rounded border-olive/30 text-sage focus:ring-sage"
-                      />
-                      <span className={`flex-1 text-sm ${item.packed ? 'line-through text-olive/30' : 'text-olive'}`}>
-                        {item.text}
-                      </span>
-                      <button
-                        onClick={() => removePackingItem(item.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/30 hover:text-red-400 rounded p-1"
-                        aria-label="Remove item"
-                      >
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-                          <line x1="3" y1="3" x2="11" y2="11" /><line x1="11" y1="3" x2="3" y2="11" />
-                        </svg>
-                      </button>
-                    </div>
+                    <PackingItemRow
+                      key={item.id}
+                      item={item}
+                      onToggle={() => togglePackingItem(item.id)}
+                      onRemove={() => removePackingItem(item.id)}
+                      onAssign={(names) => updatePackingItemAssignment(item.id, names)}
+                    />
                   ))}
                 </div>
               </div>
@@ -174,6 +207,98 @@ export function PackingPage() {
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+interface PackingItemRowProps {
+  item: PackingItem
+  onToggle: () => void
+  onRemove: () => void
+  onAssign: (names: string[]) => void
+}
+
+function PackingItemRow({ item, onToggle, onRemove, onAssign }: PackingItemRowProps) {
+  const [addingAssignee, setAddingAssignee] = useState(false)
+  const [assigneeInput, setAssigneeInput] = useState('')
+
+  function commitAssignee() {
+    const val = assigneeInput.trim()
+    if (val) {
+      const current = item.assignedTo ?? []
+      if (!current.includes(val)) onAssign([...current, val])
+    }
+    setAssigneeInput('')
+    setAddingAssignee(false)
+  }
+
+  function removeAssignee(name: string) {
+    onAssign((item.assignedTo ?? []).filter((n) => n !== name))
+  }
+
+  return (
+    <div className="group px-4 py-2.5 hover:bg-olive/5">
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={item.packed}
+          onChange={onToggle}
+          className="h-4 w-4 rounded border-olive/30 text-sage focus:ring-sage shrink-0"
+        />
+        <span className={`flex-1 text-sm ${item.packed ? 'line-through text-olive/30' : 'text-olive'}`}>
+          {item.text}
+        </span>
+        <button
+          onClick={onRemove}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-olive/30 hover:text-red-400 rounded p-1 shrink-0"
+          aria-label="Remove item"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+            <line x1="3" y1="3" x2="11" y2="11" /><line x1="11" y1="3" x2="3" y2="11" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Assignees row */}
+      <div className="ml-7 mt-1 flex flex-wrap items-center gap-1">
+        {(item.assignedTo ?? []).map((name) => (
+          <span key={name} className="inline-flex items-center gap-1 rounded-full bg-sage/15 px-2 py-0.5 text-xs text-olive/70">
+            {name}
+            <button
+              type="button"
+              onClick={() => removeAssignee(name)}
+              className="text-olive/30 hover:text-red-400 transition-colors"
+              aria-label={`Remove ${name}`}
+            >
+              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+                <line x1="2" y1="2" x2="8" y2="8"/><line x1="8" y1="2" x2="2" y2="8"/>
+              </svg>
+            </button>
+          </span>
+        ))}
+        {addingAssignee ? (
+          <input
+            autoFocus
+            className="w-24 rounded border border-olive/20 bg-white px-1.5 py-0.5 text-xs text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
+            placeholder="Name…"
+            value={assigneeInput}
+            onChange={(e) => setAssigneeInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commitAssignee() }
+              if (e.key === 'Escape') { setAddingAssignee(false); setAssigneeInput('') }
+            }}
+            onBlur={commitAssignee}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAddingAssignee(true)}
+            className="text-xs text-olive/30 hover:text-sage transition-colors opacity-0 group-hover:opacity-100"
+          >
+            + assign
+          </button>
+        )}
+      </div>
     </div>
   )
 }

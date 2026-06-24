@@ -29,6 +29,41 @@ export const MEAL_SLOT_LABELS: Record<MealSlotKey, string> = {
   snacks: 'Snacks',
 }
 
+export type GroceryCategory =
+  | 'produce' | 'dairy' | 'meat' | 'bakery' | 'dry-goods'
+  | 'frozen' | 'beverages' | 'condiments' | 'household' | 'other'
+
+export const GROCERY_CATEGORY_ORDER: GroceryCategory[] = [
+  'produce', 'dairy', 'meat', 'bakery', 'dry-goods',
+  'frozen', 'beverages', 'condiments', 'household', 'other',
+]
+
+export const GROCERY_CATEGORY_LABELS: Record<GroceryCategory, string> = {
+  produce: 'Produce',
+  dairy: 'Dairy & Eggs',
+  meat: 'Meat & Seafood',
+  bakery: 'Bakery',
+  'dry-goods': 'Dry Goods & Canned',
+  frozen: 'Frozen',
+  beverages: 'Beverages',
+  condiments: 'Condiments & Spices',
+  household: 'Household',
+  other: 'Other',
+}
+
+export const GROCERY_CATEGORY_EMOJI: Record<GroceryCategory, string> = {
+  produce: '🥦',
+  dairy: '🧀',
+  meat: '🥩',
+  bakery: '🍞',
+  'dry-goods': '🌾',
+  frozen: '❄️',
+  beverages: '🥤',
+  condiments: '🫙',
+  household: '🧹',
+  other: '📦',
+}
+
 export interface GroceryItem {
   id: string
   name: string
@@ -38,6 +73,7 @@ export interface GroceryItem {
   mealIds: string[]
   assignedTo?: string[]
   manual?: true
+  category?: GroceryCategory
 }
 
 export interface Meal {
@@ -111,6 +147,7 @@ export interface PackingItem {
   category: PackingCategory
   packed: boolean
   createdAt: string
+  assignedTo?: string[]
 }
 
 export interface AppState {

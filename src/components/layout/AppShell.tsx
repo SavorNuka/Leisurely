@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Header } from './Header'
 import { BottomNav } from './BottomNav'
 import { ShareImportBanner } from '../ui/ShareImportBanner'
+import { ToastStack } from '../ui/ToastStack'
 import { TourProvider, useTour } from '../tour/TourProvider'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -23,7 +24,8 @@ function ShellInner({ children }: { children: ReactNode }) {
     <div className="flex flex-col min-h-screen">
       <Header />
       <ShareImportBanner />
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pb-24">
+      <ToastStack />
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pb-32">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}

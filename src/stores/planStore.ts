@@ -3,6 +3,7 @@ import { subscribeWithSelector } from 'zustand/middleware'
 import type { Plan, Meal, GroceryItem, MealSlotKey, Note, NoteReply, PackingItem, PackingCategory, DietaryTag, AppState } from '../types'
 import { mergeDayPlans } from '../lib/dateUtils'
 import { aggregateIngredients } from '../lib/groceryAggregator'
+import { inferCategory } from '../lib/groceryCategories'
 import { savePlan, saveMeals, saveGroceryList, saveNotes, savePackingList, clearPlanFromDB, saveSnapshot } from '../lib/db'
 
 interface PlanStore extends AppState {
@@ -50,6 +51,7 @@ interface PlanStore extends AppState {
   togglePackingItem: (id: string) => void
   removePackingItem: (id: string) => void
   clearPackedItems: () => void
+  updatePackingItemAssignment: (id: string, assignedTo: string[]) => void
 
   // Import/export
   importState: (state: Partial<AppState>) => void
@@ -182,14 +184,16 @@ export const usePlanStore = create<PlanStore>()(
     },
 
     addManualGroceryItem(name, quantity, unit) {
+      const trimmedName = name.trim()
       const item: GroceryItem = {
         id: crypto.randomUUID(),
-        name: name.trim(),
+        name: trimmedName,
         quantity,
         unit: unit.trim(),
         checked: false,
         mealIds: [],
         manual: true,
+        category: inferCategory(trimmedName),
       }
       set((s) => ({ groceryList: [...s.groceryList, item] }))
     },
@@ -269,6 +273,14 @@ export const usePlanStore = create<PlanStore>()(
 
     clearPackedItems() {
       set((s) => ({ packingList: s.packingList.filter((item) => !item.packed) }))
+    },
+
+    updatePackingItemAssignment(id, assignedTo) {
+      set((s) => ({
+        packingList: s.packingList.map((item) =>
+          item.id === id ? { ...item, assignedTo: assignedTo.length ? assignedTo : undefined } : item
+        ),
+      }))
     },
 
     importState(state) {

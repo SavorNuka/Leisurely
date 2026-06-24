@@ -6,7 +6,7 @@ export function Header() {
   const { user, signOut } = useAuth()
 
   return (
-    <header className="sticky top-0 z-40 bg-sage shadow-sm">
+    <header className="sticky top-0 z-40 bg-sage shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-2.5">
         <svg
           aria-hidden="true"

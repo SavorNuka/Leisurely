@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePlanStore } from '../../stores/planStore'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
+import { toast } from '../../hooks/useToast'
 import type { PDFExportOptions } from '../../lib/pdf'
 
 type ExportMode = 'both' | 'plan' | 'grocery' | 'mine'
@@ -26,6 +27,7 @@ export function PdfExport() {
       }
       exportToPDF(exportState(), opts)
       setOpen(false)
+      toast('PDF downloaded')
     } finally {
       setLoading(false)
     }

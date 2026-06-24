@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ExportImport } from './ExportImport'
 import { SharePlan } from './SharePlan'
 import { PdfExport } from './PdfExport'
+import { ProfileCard } from './ProfileCard'
+import { CollaboratorRoster } from './CollaboratorRoster'
 import { usePlan } from '../../hooks/usePlan'
 import { useTour } from '../tour/TourProvider'
 import { usePWAInstall } from '../../hooks/usePWAInstall'
@@ -18,6 +20,8 @@ export function SettingsPage() {
     <div className="py-6 space-y-5">
       <h2 className="text-lg font-serif font-semibold text-olive">Settings</h2>
 
+      <ProfileCard />
+      <CollaboratorRoster />
       <SharePlan />
       <PdfExport />
       <ExportImport />

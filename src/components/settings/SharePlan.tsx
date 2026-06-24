@@ -1,20 +1,16 @@
-import { useState } from 'react'
 import { usePlanStore } from '../../stores/planStore'
 import { encodeShareLink } from '../../lib/shareLink'
 import { Button } from '../ui/Button'
+import { toast } from '../../hooks/useToast'
 
 export function SharePlan() {
   const plan = usePlanStore((s) => s.plan)
   const toggleVisibility = usePlanStore((s) => s.togglePlanVisibility)
   const exportState = usePlanStore((s) => s.exportState)
-  const [copied, setCopied] = useState(false)
 
   function handleCopy() {
     const link = encodeShareLink(exportState())
-    navigator.clipboard.writeText(link).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    })
+    navigator.clipboard.writeText(link).then(() => toast('Link copied!'))
   }
 
   return (
@@ -62,7 +58,7 @@ export function SharePlan() {
             <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
               <path d="M13.5 6H5.25A2.25 2.25 0 003 8.25v8.25A2.25 2.25 0 005.25 18.75h8.25A2.25 2.25 0 0015.75 17V8.75M13.5 6l3-3m0 0l-3-3m3 3H8.25" />
             </svg>
-            {copied ? 'Copied!' : 'Copy share link'}
+            Copy share link
           </Button>
 
           {!plan.isPublic && (
