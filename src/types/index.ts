@@ -112,6 +112,7 @@ export interface NoteReply {
   id: string
   text: string
   createdAt: string
+  authorName?: string
 }
 
 export interface Note {
@@ -121,6 +122,7 @@ export interface Note {
   likes: number
   likedByMe?: boolean
   replies: NoteReply[]
+  authorName?: string
 }
 
 export type PackingCategory = 'clothes' | 'toiletries' | 'documents' | 'kitchen' | 'misc'

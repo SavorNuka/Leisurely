@@ -106,7 +106,7 @@ export function useAuth() {
     if (!user) return
     const state = usePlanStore.getState().exportState()
     await pushPlan(state, user.id)
-    await pushNotes(state.notes, user.id)
+    await pushNotes(state.notes, user.id, state.plan?.id, displayName ?? undefined)
     if (state.plan) {
       await pushPackingList(state.packingList, state.plan.id, user.id)
     }

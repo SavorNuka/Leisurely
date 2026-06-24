@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=DM+Sans:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,5 +15,21 @@
   }
   #root {
     @apply min-h-screen flex flex-col;
+  }
+
+  /* Saffron focus ring — replaces default browser outline */
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(232, 169, 75, 0.4);
+    border-radius: 4px;
+  }
+
+  /* Honour reduced-motion preference for all keyframe animations */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

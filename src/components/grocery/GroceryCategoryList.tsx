@@ -52,14 +52,19 @@ function CategoryGroup({ category, label, emoji, items, onToggle, onAssign, onRe
 
       {!collapsed && (
         <div className="divide-y divide-olive/10" data-category={category}>
-          {unchecked.map((item) => (
-            <GroceryItem
+          {unchecked.map((item, i) => (
+            <div
               key={item.id}
-              item={item}
-              onToggle={() => onToggle(item.id)}
-              onAssign={onAssign ? (names) => onAssign(item.id, names) : undefined}
-              onRemove={item.manual && onRemove ? () => onRemove(item.id) : undefined}
-            />
+              className="animate-slide-up"
+              style={{ animationDelay: `${i * 35}ms`, animationFillMode: 'both' }}
+            >
+              <GroceryItem
+                item={item}
+                onToggle={() => onToggle(item.id)}
+                onAssign={onAssign ? (names) => onAssign(item.id, names) : undefined}
+                onRemove={item.manual && onRemove ? () => onRemove(item.id) : undefined}
+              />
+            </div>
           ))}
           {checked.length > 0 && unchecked.length > 0 && (
             <div className="px-3 py-1 text-xs font-semibold text-olive/30 uppercase tracking-wide bg-olive/[0.02]">

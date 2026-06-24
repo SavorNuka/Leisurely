@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { usePlanStore } from '../../stores/planStore'
 import { encodeShareLink } from '../../lib/shareLink'
 import { Button } from '../ui/Button'
@@ -7,10 +8,19 @@ export function SharePlan() {
   const plan = usePlanStore((s) => s.plan)
   const toggleVisibility = usePlanStore((s) => s.togglePlanVisibility)
   const exportState = usePlanStore((s) => s.exportState)
+  const [confirmPublic, setConfirmPublic] = useState(false)
 
   function handleCopy() {
     const link = encodeShareLink(exportState())
     navigator.clipboard.writeText(link).then(() => toast('Link copied!'))
+  }
+
+  function handleToggle() {
+    if (!plan?.isPublic) {
+      setConfirmPublic(true)
+    } else {
+      toggleVisibility()
+    }
   }
 
   return (
@@ -26,28 +36,40 @@ export function SharePlan() {
 
       {plan ? (
         <>
-          <label className="flex items-center justify-between cursor-pointer">
-            <div>
-              <p className="text-sm font-medium text-olive">
-                {plan.isPublic ? 'Public' : 'Private'}
-              </p>
-              <p className="text-xs text-olive/50 mt-0.5">
-                {plan.isPublic
-                  ? 'This plan is marked as shareable.'
-                  : 'Mark as public before sharing.'}
-              </p>
+          {confirmPublic ? (
+            <div className="rounded-card border border-terracotta/30 bg-terracotta/5 p-3 space-y-2">
+              <p className="text-xs text-olive font-medium">Make this plan visible to anyone with the link?</p>
+              <p className="text-xs text-olive/60">Your meal plan and grocery list will be readable by anyone who has the share link.</p>
+              <div className="flex gap-2 pt-1">
+                <Button size="sm" variant="primary" onClick={() => { toggleVisibility(); setConfirmPublic(false) }}>Make public</Button>
+                <Button size="sm" variant="ghost" onClick={() => setConfirmPublic(false)}>Cancel</Button>
+              </div>
             </div>
-            <button
-              role="switch"
-              aria-checked={plan.isPublic}
-              onClick={toggleVisibility}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sage/50 ${plan.isPublic ? 'bg-sage' : 'bg-olive/20'}`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${plan.isPublic ? 'translate-x-6' : 'translate-x-1'}`}
-              />
-            </button>
-          </label>
+          ) : (
+            <label className="flex items-center justify-between cursor-pointer">
+              <div>
+                <p className="text-sm font-medium text-olive">
+                  {plan.isPublic ? 'Public' : 'Private'}
+                </p>
+                <p className="text-xs text-olive/50 mt-0.5">
+                  {plan.isPublic
+                    ? 'This plan is marked as shareable.'
+                    : 'Mark as public before sharing.'}
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={plan.isPublic}
+                aria-label={plan.isPublic ? 'Make plan private' : 'Make plan public'}
+                onClick={handleToggle}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sage/50 ${plan.isPublic ? 'bg-sage' : 'bg-olive/20'}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${plan.isPublic ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
+            </label>
+          )}
 
           <Button
             variant={plan.isPublic ? 'primary' : 'ghost'}

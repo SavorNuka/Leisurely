@@ -36,6 +36,7 @@ export function GroceryItem({ item, onToggle, onAssign, onRemove }: GroceryItemP
           type="checkbox"
           checked={item.checked}
           onChange={onToggle}
+          aria-label={`Mark ${item.name} as ${item.checked ? 'needed' : 'got it'}`}
           className="h-4 w-4 rounded border-olive/30 text-sage focus:ring-sage shrink-0"
         />
         <span className={`flex-1 text-sm ${item.checked ? 'line-through text-olive/40' : 'text-olive'}`}>
@@ -97,6 +98,7 @@ export function GroceryItem({ item, onToggle, onAssign, onRemove }: GroceryItemP
             <button
               type="button"
               onClick={() => setAddingAssignee(true)}
+              aria-label={`Assign ${item.name} to someone`}
               className="text-xs text-olive/30 hover:text-sage transition-colors opacity-0 group-hover:opacity-100"
             >
               + assign

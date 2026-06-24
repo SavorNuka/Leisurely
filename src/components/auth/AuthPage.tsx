@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { supabase } from '../../lib/supabase'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 
@@ -8,9 +9,11 @@ export function AuthPage() {
   const { signIn, signUp, isConfigured } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
+  const [showForgot, setShowForgot] = useState(false)
   const [firstName, setFirstName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [resetEmail, setResetEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -29,6 +32,23 @@ export function AuthPage() {
         setSuccess('Account created! Check your email to confirm, then sign in.')
         setMode('signin')
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetPassword(e: FormEvent) {
+    e.preventDefault()
+    if (!supabase || !resetEmail.trim()) return
+    setLoading(true)
+    setError(null)
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail.trim())
+      if (resetError) throw resetError
+      setSuccess('Check your email for a password reset link.')
+      setShowForgot(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -91,16 +111,48 @@ export function AuthPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
-            id="password"
-            label="Password"
-            type="password"
-            autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-          />
+          <div>
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+            {mode === 'signin' && (
+              <button
+                type="button"
+                onClick={() => { setShowForgot(true); setError(null); setSuccess(null) }}
+                className="mt-1 text-xs text-olive/50 hover:text-sage transition-colors underline-offset-2 hover:underline"
+              >
+                Forgot password?
+              </button>
+            )}
+          </div>
+
+          {showForgot && (
+            <form onSubmit={handleResetPassword} className="rounded-card bg-cream/70 border border-olive/15 p-3 space-y-2">
+              <p className="text-xs text-olive/70 font-medium">Reset your password</p>
+              <Input
+                id="reset-email"
+                label="Your email"
+                type="email"
+                autoComplete="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+              />
+              <div className="flex gap-2">
+                <Button type="submit" variant="primary" size="sm" disabled={loading || !resetEmail.trim()}>
+                  {loading ? 'Sending…' : 'Send reset link'}
+                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowForgot(false)}>Cancel</Button>
+              </div>
+            </form>
+          )}
 
           {error && <p className="text-xs text-red-500 bg-red-50 rounded-card px-3 py-2">{error}</p>}
           {success && <p className="text-xs text-sage-dark bg-sage/10 rounded-card px-3 py-2">{success}</p>}
@@ -114,7 +166,7 @@ export function AuthPage() {
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
           <button
             type="button"
-            onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setSuccess(null) }}
+            onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(null); setSuccess(null); setShowForgot(false) }}
             className="text-sage hover:text-sage-dark font-medium underline-offset-2 hover:underline"
           >
             {mode === 'signin' ? 'Sign up' : 'Sign in'}

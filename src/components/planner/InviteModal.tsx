@@ -3,6 +3,7 @@ import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { sendInvites } from '../../lib/sync'
 import { useAuth } from '../../hooks/useAuth'
+import { toast } from '../../hooks/useToast'
 
 interface InviteModalProps {
   open: boolean
@@ -10,6 +11,10 @@ interface InviteModalProps {
   planId: string
   planName: string
   onConfirm: () => void
+}
+
+function isValidEmail(e: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim())
 }
 
 export function InviteModal({ open, onClose, planId, planName, onConfirm }: InviteModalProps) {
@@ -23,10 +28,15 @@ export function InviteModal({ open, onClose, planId, planName, onConfirm }: Invi
     const emails = emailsRaw
       .split(/[\n,]+/)
       .map((e) => e.trim())
-      .filter((e) => e.includes('@'))
+      .filter(Boolean)
 
+    const invalid = emails.filter((e) => !isValidEmail(e))
     if (emails.length === 0) {
-      setError('Enter at least one valid email address.')
+      setError('Enter at least one email address.')
+      return
+    }
+    if (invalid.length > 0) {
+      setError(`Invalid email${invalid.length > 1 ? 's' : ''}: ${invalid.join(', ')}`)
       return
     }
 
@@ -43,25 +53,30 @@ export function InviteModal({ open, onClose, planId, planName, onConfirm }: Invi
       return
     }
 
+    toast('Invites sent')
     setSent(true)
-    setTimeout(() => {
-      onConfirm()
-      onClose()
-    }, 1500)
+  }
+
+  function handleDone() {
+    onConfirm()
+    onClose()
   }
 
   return (
     <Modal open={open} onClose={onClose} title="Invite people to your trip">
       <div className="space-y-4">
         {sent ? (
-          <div className="py-4 text-center space-y-2">
+          <div className="py-4 text-center space-y-4">
             <div className="h-10 w-10 rounded-full bg-sage/15 flex items-center justify-center mx-auto">
               <svg className="h-5 w-5 text-sage" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="4 10 8 14 16 6" />
               </svg>
             </div>
             <p className="text-sm font-medium text-olive">Invites sent!</p>
-            <p className="text-xs text-olive/60">Your group will receive an email with a link to join.</p>
+            <p className="text-xs text-olive/60">Your group will receive an email with a link to join <strong>{planName}</strong>.</p>
+            <div className="flex justify-center">
+              <Button variant="primary" onClick={handleDone}>Done</Button>
+            </div>
           </div>
         ) : (
           <>
@@ -72,7 +87,7 @@ export function InviteModal({ open, onClose, planId, planName, onConfirm }: Invi
             <textarea
               autoFocus
               value={emailsRaw}
-              onChange={(e) => setEmailsRaw(e.target.value)}
+              onChange={(e) => { setEmailsRaw(e.target.value); setError(null) }}
               placeholder={'family@example.com\nfriend@example.com'}
               rows={4}
               className="w-full rounded-card border border-olive/20 bg-cream px-3 py-2 text-sm text-olive placeholder:text-olive/35 focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none resize-none font-mono"
