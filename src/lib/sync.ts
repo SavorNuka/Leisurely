@@ -318,3 +318,54 @@ export function subscribeToRealtime(
 
   return () => { supabase?.removeChannel(channel) }
 }
+
+// ── Collaborator roster with profiles ────────────────────────────────────────
+
+export async function getCollaboratorsWithProfiles(
+  planId: string
+): Promise<Array<{ userId: string; role: string; joinedAt: string; displayName: string | null }>> {
+  if (!isConfigured() || !supabase) return []
+  const { data } = await supabase
+    .from('plan_collaborators')
+    .select('user_id, role, joined_at, profiles(display_name)')
+    .eq('plan_id', planId)
+  return (data ?? []).map((r) => {
+    const profile = r.profiles
+    const displayName = Array.isArray(profile)
+      ? (profile[0]?.display_name ?? null)
+      : (profile as { display_name: string | null } | null)?.display_name ?? null
+    return {
+      userId: r.user_id as string,
+      role: r.role as string,
+      joinedAt: r.joined_at as string,
+      displayName,
+    }
+  })
+}
+
+export async function getPendingInvites(
+  planId: string
+): Promise<Array<{ id: string; email: string; expiresAt: string }>> {
+  if (!isConfigured() || !supabase) return []
+  const { data } = await supabase
+    .from('plan_invites')
+    .select('id, email, expires_at')
+    .eq('plan_id', planId)
+    .is('accepted_at', null)
+    .gt('expires_at', new Date().toISOString())
+  return (data ?? []).map((r: { id: string; email: string; expires_at: string }) => ({
+    id: r.id,
+    email: r.email,
+    expiresAt: r.expires_at,
+  }))
+}
+
+export async function deleteInvite(inviteId: string): Promise<void> {
+  if (!isConfigured() || !supabase) return
+  await supabase.from('plan_invites').delete().eq('id', inviteId)
+}
+
+export async function updateDisplayName(userId: string, displayName: string): Promise<void> {
+  if (!isConfigured() || !supabase) return
+  await supabase.from('profiles').upsert({ id: userId, display_name: displayName })
+}

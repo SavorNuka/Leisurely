@@ -3,10 +3,12 @@ import { usePlanStore } from '../../stores/planStore'
 import { usePlan } from '../../hooks/usePlan'
 import { useAuth } from '../../hooks/useAuth'
 import { useExportImport } from '../../hooks/useExportImport'
+import { useTripHistory } from '../../hooks/useTripHistory'
 import { DateRangePicker } from './DateRangePicker'
 import { MealGrid } from './MealGrid'
 import { DietaryFilter } from './DietaryFilter'
 import { InviteModal } from './InviteModal'
+import { TripSwitcher } from './TripSwitcher'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { motion } from 'framer-motion'
@@ -21,6 +23,8 @@ export function PlannerPage() {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const { stubs } = useTripHistory()
 
   const hour = new Date().getHours()
   const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -57,6 +61,12 @@ export function PlannerPage() {
             >
               {greetingLine} 🌿
             </motion.p>
+          )}
+
+          {stubs.length > 0 && (
+            <div className="flex items-center gap-3">
+              <TripSwitcher trigger="button" />
+            </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -166,9 +176,12 @@ export function PlannerPage() {
         </div>
       ) : (
         <div className="space-y-4 py-6">
-          {user && (
-            <p className="text-sm font-serif font-medium text-olive/60">{greetingLine} 🌿</p>
-          )}
+          <div className="flex items-center justify-between">
+            {user && (
+              <p className="text-sm font-serif font-medium text-olive/60">{greetingLine} 🌿</p>
+            )}
+            <TripSwitcher trigger="link" />
+          </div>
           <DateRangePicker />
           <DietaryFilter />
           <MealGrid days={plan.days} />

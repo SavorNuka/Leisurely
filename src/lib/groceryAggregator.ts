@@ -1,4 +1,5 @@
 import type { Meal, GroceryItem, DayPlan, MealSlotKey } from '../types'
+import { inferCategory } from './groceryCategories'
 
 const SLOT_KEYS: MealSlotKey[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 
@@ -43,6 +44,7 @@ export function aggregateIngredients(
             checked: existingChecked.get(key) ?? false,
             mealIds: [mealId],
             assignedTo: meal.assignedTo?.length ? [...meal.assignedTo] : undefined,
+            category: inferCategory(ingredient.name),
           })
         }
       }

@@ -1,5 +1,14 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Plan, Meal, GroceryItem, Note, PackingItem } from '../types'
+import type { Plan, Meal, GroceryItem, Note, PackingItem, AppState, TripStub, Recipe } from '../types'
+
+interface SnapshotRecord {
+  planId: string
+  name: string
+  startDate: string
+  endDate: string
+  savedAt: string
+  state: AppState
+}
 
 interface LeisurelyDB extends DBSchema {
   plan: { key: string; value: Plan }
@@ -8,10 +17,12 @@ interface LeisurelyDB extends DBSchema {
   notes: { key: string; value: Note }
   packingList: { key: string; value: PackingItem }
   meta: { key: string; value: string }
+  snapshots: { key: string; value: SnapshotRecord }
+  customRecipes: { key: string; value: Recipe }
 }
 
 const DB_NAME = 'leisurely-db'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 let dbPromise: Promise<IDBPDatabase<LeisurelyDB>> | null = null
 
@@ -31,6 +42,10 @@ function getDB() {
         }
         if (oldVersion < 3) {
           db.createObjectStore('packingList', { keyPath: 'id' })
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore('snapshots', { keyPath: 'planId' })
+          db.createObjectStore('customRecipes', { keyPath: 'id' })
         }
       },
     })
@@ -123,4 +138,64 @@ export async function savePackingList(items: PackingItem[]) {
     await tx.store.put(item)
   }
   await tx.done
+}
+
+// ── Trip snapshots ─────────────────────────────────────────────────────────────
+
+export async function saveSnapshot(
+  planId: string,
+  meta: { name: string; startDate: string; endDate: string },
+  state: AppState
+): Promise<void> {
+  const db = await getDB()
+  await db.put('snapshots', {
+    planId,
+    name: meta.name,
+    startDate: meta.startDate,
+    endDate: meta.endDate,
+    savedAt: new Date().toISOString(),
+    state,
+  })
+}
+
+export async function loadSnapshot(planId: string): Promise<AppState | null> {
+  const db = await getDB()
+  const record = await db.get('snapshots', planId)
+  return record?.state ?? null
+}
+
+export async function listSnapshots(): Promise<TripStub[]> {
+  const db = await getDB()
+  const records = await db.getAll('snapshots')
+  return records
+    .map((r) => ({
+      planId: r.planId,
+      name: r.name,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      savedAt: r.savedAt,
+    }))
+    .sort((a, b) => b.savedAt.localeCompare(a.savedAt))
+}
+
+export async function deleteSnapshot(planId: string): Promise<void> {
+  const db = await getDB()
+  await db.delete('snapshots', planId)
+}
+
+// ── Custom recipes ─────────────────────────────────────────────────────────────
+
+export async function saveCustomRecipe(recipe: Recipe): Promise<void> {
+  const db = await getDB()
+  await db.put('customRecipes', recipe)
+}
+
+export async function loadCustomRecipes(): Promise<Recipe[]> {
+  const db = await getDB()
+  return db.getAll('customRecipes')
+}
+
+export async function deleteCustomRecipe(id: string): Promise<void> {
+  const db = await getDB()
+  await db.delete('customRecipes', id)
 }

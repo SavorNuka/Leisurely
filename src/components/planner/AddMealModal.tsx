@@ -6,6 +6,8 @@ import { DietaryTagBadge } from './DietaryTagBadge'
 import { RecipeBrowser } from './RecipeBrowser'
 import { usePlanStore } from '../../stores/planStore'
 import { PRESET_DIETARY_TAGS, type DietaryTag, type Meal, type MealSlotKey, type GroceryItem, type Recipe } from '../../types'
+import { saveCustomRecipe } from '../../lib/db'
+import { toast } from '../../hooks/useToast'
 
 interface IngredientRow {
   id: string
@@ -229,9 +231,41 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
           <Button type="button" variant="ghost" size="sm" onClick={addIngredientRow}>+ Add ingredient</Button>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary">{editingMeal ? 'Save changes' : 'Add meal'}</Button>
+        <div className="flex items-center justify-between pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!name.trim()}
+            onClick={async () => {
+              const parsedIngredients: GroceryItem[] = ingredients
+                .filter((r) => r.name.trim())
+                .map((r) => ({
+                  id: r.id,
+                  name: r.name.trim(),
+                  quantity: parseFloat(r.quantity) || 1,
+                  unit: r.unit.trim(),
+                  checked: false,
+                  mealIds: [],
+                }))
+              const recipe: Recipe = {
+                id: crypto.randomUUID(),
+                name: name.trim(),
+                description: notes.trim(),
+                servings: parseInt(servings) || 1,
+                dietaryTags: selectedTags,
+                ingredients: parsedIngredients.map(({ id, name: n, quantity, unit }) => ({ id, name: n, quantity, unit })),
+              }
+              await saveCustomRecipe(recipe)
+              toast('Saved to My Recipes')
+            }}
+          >
+            ★ Save as recipe
+          </Button>
+          <div className="flex gap-3">
+            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary">{editingMeal ? 'Save changes' : 'Add meal'}</Button>
+          </div>
         </div>
       </form>
     </Modal>
