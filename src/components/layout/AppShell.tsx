@@ -25,7 +25,7 @@ function ShellInner({ children }: { children: ReactNode }) {
       <Header />
       <ShareImportBanner />
       <ToastStack />
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pb-32">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 pb-32">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}

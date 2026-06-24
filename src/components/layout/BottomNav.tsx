@@ -71,7 +71,7 @@ export function BottomNav() {
       className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-olive/10"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="max-w-2xl mx-auto flex">
+      <div className="max-w-5xl mx-auto flex">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

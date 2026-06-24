@@ -47,7 +47,7 @@ export function MealGrid({ days }: MealGridProps) {
 
   // Rotated layout: rows = meal types, columns = days
   // Using inline gridTemplateColumns for dynamic column count
-  const colTemplate = `80px repeat(${days.length}, minmax(72px, 1fr))`
+  const colTemplate = `80px repeat(${days.length}, minmax(100px, 1fr))`
 
   return (
     <div className="relative">
