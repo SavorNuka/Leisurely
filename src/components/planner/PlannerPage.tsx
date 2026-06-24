@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { usePlanStore } from '../../stores/planStore'
 import { usePlan } from '../../hooks/usePlan'
 import { useAuth } from '../../hooks/useAuth'
@@ -12,6 +13,7 @@ import { TripSwitcher } from './TripSwitcher'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { motion } from 'framer-motion'
+import { isConfigured } from '../../lib/supabase'
 
 export function PlannerPage() {
   const plan = usePlanStore((s) => s.plan)
@@ -51,17 +53,85 @@ export function PlannerPage() {
   return (
     <>
       {!plan ? (
-        <div className="py-8 space-y-6">
-          {user && (
-            <motion.p
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-base font-serif font-medium text-olive/70"
+        <div className="py-8 space-y-8">
+          {/* Welcome hero */}
+          <div className="text-center space-y-4 pt-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
+              className="flex justify-center"
+              aria-hidden="true"
             >
-              {greetingLine} 🌿
-            </motion.p>
-          )}
+              <svg
+                viewBox="0 0 32 32"
+                className="h-14 w-14 text-ink-900"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="16" y1="28" x2="16" y2="10" />
+                <path d="M16 22 C11 19, 8 14, 10 10 C12 6, 16 10, 16 13" />
+                <path d="M16 18 C21 15, 24 10, 22 6 C20 2, 16 6, 16 9" />
+                <path d="M16 26 C12 24, 9 21, 10 18" />
+                <path d="M16 26 C20 24, 23 21, 22 18" />
+              </svg>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+            >
+              <h1 className="font-serif font-light text-4xl sm:text-5xl text-ink-900 tracking-wide">
+                Leisurely
+              </h1>
+              <p className="mt-2 text-sm text-ink-400 font-sans">Plan meals, not spreadsheets.</p>
+            </motion.div>
+
+            {user ? (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="text-sm font-serif text-olive/70"
+              >
+                {greetingLine} 🌿
+              </motion.p>
+            ) : isConfigured() ? (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.22 }}
+                className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1"
+              >
+                <Link
+                  to="/auth"
+                  className="w-full sm:w-auto px-7 py-2.5 rounded-xl bg-ink-900 text-cream text-sm font-semibold hover:bg-ink-700 transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/auth"
+                  className="w-full sm:w-auto px-7 py-2.5 rounded-xl border-2 border-ink-900 text-ink-900 text-sm font-semibold hover:bg-ink-900/5 transition-colors"
+                >
+                  Create account
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('plan-cards')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="flex items-center gap-1 text-sm text-ink-400 hover:text-ink-700 transition-colors"
+                >
+                  Continue without account
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 14 14" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+                    <path d="M4 2l6 5-6 5" />
+                  </svg>
+                </button>
+              </motion.div>
+            ) : null}
+          </div>
 
           {stubs.length > 0 && (
             <div className="flex items-center gap-3">
@@ -69,7 +139,7 @@ export function PlannerPage() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3" id="plan-cards">
             {/* Start a new trip */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}

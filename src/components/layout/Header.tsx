@@ -10,7 +10,7 @@ export function Header() {
       className="sticky top-0 z-40 bg-ink-900 shadow-sm"
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-2.5">
+      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center gap-2.5">
         <svg
           aria-hidden="true"
           className="h-6 w-6 text-sand-100/70"
