@@ -6,11 +6,14 @@ export function Header() {
   const { user, signOut } = useAuth()
 
   return (
-    <header className="sticky top-0 z-40 bg-sage shadow-sm" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <header
+      className="sticky top-0 z-40 bg-ink-900 shadow-sm"
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+    >
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-2.5">
         <svg
           aria-hidden="true"
-          className="h-6 w-6 text-cream/80"
+          className="h-6 w-6 text-sand-100/70"
           viewBox="0 0 32 32"
           fill="none"
           stroke="currentColor"
@@ -25,10 +28,10 @@ export function Header() {
           <path d="M16 26 C20 24, 23 21, 22 18" />
         </svg>
         <div className="flex-1">
-          <span className="font-serif font-semibold text-lg text-cream leading-none tracking-tight">
+          <span className="font-serif font-light text-xl text-sand-100 leading-none tracking-wide">
             Leisurely
           </span>
-          <span className="hidden sm:block text-xs text-cream/60 leading-none mt-0.5">
+          <span className="hidden sm:block text-[10px] text-sand-100/40 leading-none mt-0.5 tracking-widest uppercase font-sans">
             Meal planning, minus the stress.
           </span>
         </div>
@@ -37,10 +40,10 @@ export function Header() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <span className="hidden sm:block text-xs text-cream/70 truncate max-w-[140px]">{user.email}</span>
+                <span className="hidden sm:block text-xs text-sand-100/50 truncate max-w-[140px]">{user.email}</span>
                 <button
                   onClick={signOut}
-                  className="text-xs text-cream/80 hover:text-cream px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
+                  className="text-xs text-sand-100/60 hover:text-sand-100 px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
                 >
                   Sign out
                 </button>
@@ -48,7 +51,7 @@ export function Header() {
             ) : (
               <Link
                 to="/auth"
-                className="text-xs text-cream/80 hover:text-cream px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
+                className="text-xs text-sand-100/60 hover:text-sand-100 px-2 py-1 rounded-md hover:bg-white/10 transition-colors"
               >
                 Sign in
               </Link>
