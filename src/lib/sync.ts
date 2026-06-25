@@ -258,11 +258,12 @@ export async function sendInvites(
   planId: string,
   planName: string,
   inviterName: string,
-  emails: string[]
+  emails: string[],
+  planDates?: { startDate: string; endDate: string }
 ): Promise<{ error: string | null }> {
   if (!isConfigured() || !supabase) return { error: 'Supabase not configured' }
   const { error } = await supabase.functions.invoke('invite-collaborator', {
-    body: { planId, planName, inviterName, emails },
+    body: { planId, planName, inviterName, emails, ...planDates },
   })
   return { error: error?.message ?? null }
 }
