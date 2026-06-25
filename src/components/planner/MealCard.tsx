@@ -20,7 +20,7 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
   }
 
   return (
-    <div className="group relative bg-sand-50 rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-200 p-2.5 flex flex-col gap-1 min-w-0 h-full border-l-[3px] border-l-transparent">
+    <div className="group relative bg-sand-50 rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-200 p-2.5 flex flex-col gap-1 min-w-0 h-full border-l-[3px] border-l-transparent overflow-hidden">
       <div className="flex items-start justify-between gap-1">
         <p className={`font-sans font-medium text-ink-900 leading-tight ${compact ? 'text-xs line-clamp-2' : 'text-sm'}`}>
           {meal.name}

@@ -176,7 +176,7 @@ export function NotesPage() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    addNote(text, authorStamp)
+    addNote(text, authorStamp, user?.id)
     setText('')
   }
 
@@ -236,7 +236,7 @@ export function NotesPage() {
                   note={note}
                   currentUserId={user?.id}
                   onLike={() => likeNote(note.id)}
-                  onAddReply={(t) => addReply(note.id, t, authorStamp)}
+                  onAddReply={(t) => addReply(note.id, t, authorStamp, user?.id)}
                   onRemoveReply={(rid) => removeReply(note.id, rid)}
                   onDelete={() => removeNote(note.id)}
                 />

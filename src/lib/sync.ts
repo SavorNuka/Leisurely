@@ -324,7 +324,7 @@ export async function processInvite(
 
 export function subscribeToRealtime(
   planId: string,
-  userId: string,
+  _userId: string,
   onPlanChange: () => void,
   onMealChange: () => void,
   onGroceryChange: () => void,
@@ -337,7 +337,7 @@ export function subscribeToRealtime(
     .on('postgres_changes', { event: '*', schema: 'public', table: 'plans', filter: `id=eq.${planId}` }, onPlanChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'meals', filter: `plan_id=eq.${planId}` }, onMealChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'grocery_items', filter: `plan_id=eq.${planId}` }, onGroceryChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, onNoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `plan_id=eq.${planId}` }, onNoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'note_replies' }, onNoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'note_likes' }, onNoteChange)
     .subscribe()
