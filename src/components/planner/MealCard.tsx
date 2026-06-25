@@ -20,7 +20,7 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
   }
 
   return (
-    <div className="group relative bg-sand-50 rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-200 p-2.5 flex flex-col gap-1 min-w-0 h-full border-l-[3px] border-l-transparent">
+    <div className="group relative bg-sand-50 rounded-card shadow-card hover:shadow-card-hover transition-shadow duration-200 p-2.5 flex flex-col gap-1 min-w-0 h-full border-l-[3px] border-l-transparent overflow-hidden">
       <div className="flex items-start justify-between gap-1">
         <p className={`font-sans font-medium text-ink-900 leading-tight ${compact ? 'text-xs line-clamp-2' : 'text-sm'}`}>
           {meal.name}
@@ -60,6 +60,19 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
           ))}
           {compact && meal.dietaryTags.length > 2 && (
             <span className="text-[10px] text-ink-400">+{meal.dietaryTags.length - 2}</span>
+          )}
+        </div>
+      )}
+
+      {meal.assignedTo && meal.assignedTo.length > 0 && (
+        <div className="flex flex-wrap gap-0.5 mt-0.5">
+          {meal.assignedTo.slice(0, compact ? 1 : 3).map((name) => (
+            <span key={name} className="text-[9px] font-sans bg-sage/15 text-olive/60 rounded-full px-1.5 py-0.5 leading-none">
+              {name}
+            </span>
+          ))}
+          {compact && meal.assignedTo.length > 1 && (
+            <span className="text-[9px] text-ink-400">+{meal.assignedTo.length - 1}</span>
           )}
         </div>
       )}

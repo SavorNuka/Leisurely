@@ -56,8 +56,18 @@ export async function pushNotes(
 ): Promise<void> {
   if (!isConfigured() || !supabase) return
 
-  await supabase.from('notes').delete().eq('user_id', userId)
-  const rows = notes.map((n) => ({
+  // Only push notes authored by the current user to avoid RLS rejections
+  const ownNotes = notes.filter((n) => !n.authorId || n.authorId === userId)
+
+  // Scoped delete: only remove own notes in this plan to preserve other users' notes
+  const deleteQuery = supabase.from('notes').delete().eq('user_id', userId)
+  if (planId) {
+    await deleteQuery.eq('plan_id', planId)
+  } else {
+    await deleteQuery
+  }
+
+  const rows = ownNotes.map((n) => ({
     id: n.id,
     user_id: userId,
     plan_id: planId ?? null,
@@ -69,18 +79,20 @@ export async function pushNotes(
     await supabase.from('notes').insert(rows)
   }
 
-  const noteIds = notes.map((n) => n.id)
-  if (noteIds.length > 0) {
-    await supabase.from('note_replies').delete().in('note_id', noteIds)
-    const replyRows = notes.flatMap((n) =>
-      (n.replies ?? []).map((r) => ({
-        id: r.id,
-        note_id: n.id,
-        user_id: userId,
-        text: r.text,
-        created_at: r.createdAt,
-        author_name: r.authorName ?? displayName ?? null,
-      }))
+  const ownNoteIds = ownNotes.map((n) => n.id)
+  if (ownNoteIds.length > 0) {
+    await supabase.from('note_replies').delete().in('note_id', ownNoteIds)
+    const replyRows = ownNotes.flatMap((n) =>
+      (n.replies ?? [])
+        .filter((r) => !r.authorId || r.authorId === userId)
+        .map((r) => ({
+          id: r.id,
+          note_id: n.id,
+          user_id: userId,
+          text: r.text,
+          created_at: r.createdAt,
+          author_name: r.authorName ?? displayName ?? null,
+        }))
     )
     if (replyRows.length > 0) {
       await supabase.from('note_replies').insert(replyRows)
@@ -169,15 +181,23 @@ export async function pullFromSupabase(
 ): Promise<Partial<AppState & { packingList: PackingItem[] }> | null> {
   if (!isConfigured() || !supabase) return null
 
-  const [plansRes, mealsRes, groceryRes, notesRes] = await Promise.all([
-    supabase.from('plans').select('*').eq('user_id', userId).order('updated_at', { ascending: false }).limit(1),
-    supabase.from('meals').select('*').eq('user_id', userId),
-    supabase.from('grocery_items').select('*').eq('user_id', userId),
-    supabase.from('notes').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-  ])
+  // Fetch plan first so its id is available for the plan-scoped notes query
+  const plansRes = await supabase
+    .from('plans')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
 
   if (plansRes.error || !plansRes.data?.length) return null
   const planRow = plansRes.data[0]
+
+  const [mealsRes, groceryRes, notesRes] = await Promise.all([
+    supabase.from('meals').select('*').eq('user_id', userId),
+    supabase.from('grocery_items').select('*').eq('user_id', userId),
+    // Pull all notes for this plan (not just own) so collaborators' posts are visible
+    supabase.from('notes').select('*').eq('plan_id', planRow.id).order('created_at', { ascending: false }),
+  ])
 
   const plan = {
     id: planRow.id,
@@ -208,11 +228,11 @@ export async function pullFromSupabase(
       : Promise.resolve({ data: [] as unknown[] }),
   ])
 
-  const repliesByNoteId: Record<string, Array<{ id: string; text: string; createdAt: string; authorName?: string }>> = {}
+  const repliesByNoteId: Record<string, Array<{ id: string; text: string; createdAt: string; authorName?: string; authorId?: string }>> = {}
   for (const r of repliesRes.data ?? []) {
-    const row = r as { id: string; note_id: string; text: string; created_at: string; author_name?: string }
+    const row = r as { id: string; note_id: string; user_id: string; text: string; created_at: string; author_name?: string }
     if (!repliesByNoteId[row.note_id]) repliesByNoteId[row.note_id] = []
-    repliesByNoteId[row.note_id].push({ id: row.id, text: row.text, createdAt: row.created_at, authorName: row.author_name ?? undefined })
+    repliesByNoteId[row.note_id].push({ id: row.id, text: row.text, createdAt: row.created_at, authorName: row.author_name ?? undefined, authorId: row.user_id })
   }
 
   const likeCountByNoteId: Record<string, number> = {}
@@ -223,7 +243,7 @@ export async function pullFromSupabase(
     if (row.user_id === userId) likedByMeSet.add(row.note_id)
   }
 
-  const notes = (notesRes.data ?? []).map((r: { id: string; text: string; created_at: string; author_name?: string }) => ({
+  const notes = (notesRes.data ?? []).map((r: { id: string; user_id: string; text: string; created_at: string; author_name?: string }) => ({
     id: r.id,
     text: r.text,
     createdAt: r.created_at,
@@ -231,6 +251,7 @@ export async function pullFromSupabase(
     likedByMe: likedByMeSet.has(r.id),
     replies: repliesByNoteId[r.id] ?? [],
     authorName: r.author_name ?? undefined,
+    authorId: r.user_id,
   }))
 
   const packingRes = await supabase
@@ -303,7 +324,7 @@ export async function processInvite(
 
 export function subscribeToRealtime(
   planId: string,
-  userId: string,
+  _userId: string,
   onPlanChange: () => void,
   onMealChange: () => void,
   onGroceryChange: () => void,
@@ -316,7 +337,7 @@ export function subscribeToRealtime(
     .on('postgres_changes', { event: '*', schema: 'public', table: 'plans', filter: `id=eq.${planId}` }, onPlanChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'meals', filter: `plan_id=eq.${planId}` }, onMealChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'grocery_items', filter: `plan_id=eq.${planId}` }, onGroceryChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `user_id=eq.${userId}` }, onNoteChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes', filter: `plan_id=eq.${planId}` }, onNoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'note_replies' }, onNoteChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'note_likes' }, onNoteChange)
     .subscribe()

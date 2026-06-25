@@ -32,7 +32,7 @@ interface PlanStore extends AppState {
   regenerateGroceryList: () => void
   toggleGroceryItem: (id: string) => void
   updateGroceryItemAssignment: (id: string, assignedTo: string[]) => void
-  addManualGroceryItem: (name: string, quantity: number, unit: string) => void
+  addManualGroceryItem: (name: string, quantity: number, unit: string, addedBy?: string) => void
   removeGroceryItem: (id: string) => void
 
   // Trip snapshot actions
@@ -40,10 +40,10 @@ interface PlanStore extends AppState {
   saveCurrentAndSwitch: (targetState: AppState) => void
 
   // Note actions
-  addNote: (text: string, authorName?: string) => void
+  addNote: (text: string, authorName?: string, authorId?: string) => void
   removeNote: (id: string) => void
   likeNote: (id: string) => void
-  addReply: (noteId: string, text: string, authorName?: string) => void
+  addReply: (noteId: string, text: string, authorName?: string, authorId?: string) => void
   removeReply: (noteId: string, replyId: string) => void
 
   // Packing actions
@@ -183,7 +183,7 @@ export const usePlanStore = create<PlanStore>()(
       }))
     },
 
-    addManualGroceryItem(name, quantity, unit) {
+    addManualGroceryItem(name, quantity, unit, addedBy) {
       const trimmedName = name.trim()
       const item: GroceryItem = {
         id: crypto.randomUUID(),
@@ -194,6 +194,7 @@ export const usePlanStore = create<PlanStore>()(
         mealIds: [],
         manual: true,
         category: inferCategory(trimmedName),
+        addedBy: addedBy || undefined,
       }
       set((s) => ({ groceryList: [...s.groceryList, item] }))
     },
@@ -218,8 +219,8 @@ export const usePlanStore = create<PlanStore>()(
       get().importState(targetState)
     },
 
-    addNote(text, authorName) {
-      const note: Note = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), likes: 0, replies: [], authorName }
+    addNote(text, authorName, authorId) {
+      const note: Note = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), likes: 0, replies: [], authorName, authorId }
       set((s) => ({ notes: [note, ...s.notes] }))
     },
 
@@ -235,8 +236,8 @@ export const usePlanStore = create<PlanStore>()(
       }))
     },
 
-    addReply(noteId, text, authorName) {
-      const reply: NoteReply = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), authorName }
+    addReply(noteId, text, authorName, authorId) {
+      const reply: NoteReply = { id: crypto.randomUUID(), text: text.trim(), createdAt: new Date().toISOString(), authorName, authorId }
       set((s) => ({
         notes: s.notes.map((n) => n.id === noteId ? { ...n, replies: [...(n.replies ?? []), reply] } : n)
       }))
