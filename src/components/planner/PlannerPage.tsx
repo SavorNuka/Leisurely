@@ -264,6 +264,8 @@ export function PlannerPage() {
           onClose={closeInvite}
           planId={invitePlanId}
           planName={invitePlanName}
+          planStart={plan?.startDate ?? undefined}
+          planEnd={plan?.endDate ?? undefined}
           onConfirm={closeInvite}
         />
       )}

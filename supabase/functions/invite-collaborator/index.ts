@@ -35,7 +35,7 @@ serve(async (req) => {
     })
   }
 
-  const { planId, planName, inviterName, emails } = await req.json()
+  const { planId, planName, inviterName, emails, startDate, endDate } = await req.json()
 
   if (!planId || !Array.isArray(emails) || emails.length === 0) {
     return new Response(JSON.stringify({ error: 'Missing fields' }), {
@@ -69,9 +69,9 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'Leisurely <invites@leisurely.app>',
         to: email,
-        subject: `${inviterName} invited you to join "${planName}" on Leisurely`,
-        html: buildHtml(planName, inviterName, joinUrl),
-        text: buildText(planName, inviterName, joinUrl),
+        subject: `${inviterName} invited you to use Leisurely for your upcoming trip`,
+        html: buildHtml(planName, inviterName, joinUrl, startDate, endDate),
+        text: buildText(planName, inviterName, joinUrl, startDate, endDate),
         headers: {
           'List-Unsubscribe': '<mailto:unsubscribe@leisurely.app?subject=unsubscribe>',
         },
@@ -93,58 +93,148 @@ serve(async (req) => {
   })
 })
 
-function buildHtml(planName: string, inviterName: string, joinUrl: string): string {
+function buildTripLine(planName: string, startDate?: string, endDate?: string): string {
+  if (!startDate || !endDate) return planName
+  // T12:00:00 prevents UTC midnight → prior day in west-coast timezones
+  const fmt = (iso: string) =>
+    new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return `${planName}  ·  ${fmt(startDate)} – ${fmt(endDate)}`
+}
+
+function buildHtml(
+  planName: string,
+  inviterName: string,
+  joinUrl: string,
+  startDate?: string,
+  endDate?: string
+): string {
+  const tripLine = buildTripLine(planName, startDate, endDate)
+  const preheader = `${inviterName} invited you to plan your trip together on Leisurely — where groups plan meals, groceries, and packing stress-free.`
+  // Pad to ~100 chars with zero-width spaces so email clients don't pull in body text
+  const paddedPreheader = preheader + '&#8203;'.repeat(Math.max(0, 90 - preheader.length))
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>You're invited to ${planName}</title>
+  <title>${inviterName} invited you to use Leisurely for your upcoming trip</title>
 </head>
-<body style="margin:0;padding:0;background:#F5F0E8;font-family:Inter,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0E8;padding:32px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:560px;width:100%;">
-        <tr>
-          <td style="background:#7D9B76;padding:28px 40px;">
-            <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Leisurely 🌿</p>
-            <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.75);">Group vacation meal planner</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:40px 40px 32px;">
-            <p style="margin:0 0 16px;font-size:16px;color:#3D4A2E;line-height:1.6;">
-              <strong>${inviterName}</strong> has invited you to join <strong>&ldquo;${planName}&rdquo;</strong> on Leisurely &mdash; where your group plans meals, groceries, and packing for the trip ahead.
-            </p>
-            <p style="margin:0 0 32px;font-size:14px;color:#3D4A2E;opacity:0.7;line-height:1.6;">
-              Click below to accept the invite and start collaborating.
-            </p>
-            <a href="${joinUrl}" style="display:inline-block;background:#C17B5A;color:#ffffff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:8px;text-decoration:none;">
-              Accept invite &rarr;
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td style="border-top:1px solid #e8e3da;padding:20px 40px;">
-            <p style="margin:0;font-size:11px;color:#3D4A2E;opacity:0.45;line-height:1.6;">
-              If you weren&rsquo;t expecting this invite, you can safely ignore this email.<br/>
-              Direct link: ${joinUrl}
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td></tr>
+<body style="margin:0;padding:0;background-color:#F2F1EC;font-family:Arial,Helvetica,sans-serif;">
+
+  <!-- Preheader -->
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    ${paddedPreheader}
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F1EC;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+          <!-- HEADER -->
+          <tr>
+            <td bgcolor="#1C1A18" style="background-color:#1C1A18;padding:32px 40px;border-radius:12px 12px 0 0;">
+              <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:400;color:#F5F0E8;letter-spacing:0.04em;line-height:1.2;">Leisurely</p>
+              <p style="margin:8px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:400;color:rgba(245,240,232,0.45);letter-spacing:0.08em;text-transform:uppercase;">Meal planning, minus the stress.</p>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td bgcolor="#FFFFFF" style="background-color:#FFFFFF;padding:40px 40px 0;">
+
+              <!-- Headline -->
+              <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#1C1A18;line-height:1.35;">
+                ${inviterName} invited you to use Leisurely for your upcoming trip.
+              </p>
+
+              <!-- Trip chip -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                <tr>
+                  <td bgcolor="#F2F1EC" style="background-color:#F2F1EC;border-radius:6px;padding:10px 16px;">
+                    <span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#7A756C;letter-spacing:0.07em;text-transform:uppercase;">${tripLine}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Body copy -->
+              <p style="margin:0 0 32px;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#3D3A35;line-height:1.65;">
+                Leisurely helps groups plan meals, groceries, and packing for trips — all in one place, stress-free. Click below to join the plan and start collaborating.
+              </p>
+
+              <!-- CTA button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                <tr>
+                  <td bgcolor="#E8A94B" style="background-color:#E8A94B;border-radius:8px;">
+                    <a href="${joinUrl}" style="display:inline-block;padding:14px 40px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;color:#1C1A18;text-decoration:none;letter-spacing:0.01em;">Join the trip</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Account note -->
+              <p style="margin:0 0 40px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#7A756C;line-height:1.65;">
+                You'll need a free account to join. You can sign up at the link above — it only takes a moment.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- DIVIDER -->
+          <tr>
+            <td bgcolor="#FFFFFF" style="background-color:#FFFFFF;padding:0 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top:1px solid #EAE8E1;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td bgcolor="#EAE8E1" style="background-color:#EAE8E1;padding:24px 40px;border-radius:0 0 12px 12px;">
+              <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7A756C;line-height:1.6;">
+                You received this because ${inviterName} invited you to a Leisurely trip plan. If you weren't expecting this, you can safely ignore this email.
+              </p>
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7A756C;line-height:1.6;">
+                <a href="${joinUrl}" style="color:#7A756C;text-decoration:underline;">Direct link</a>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <a href="mailto:unsubscribe@leisurely.app?subject=unsubscribe" style="color:#7A756C;text-decoration:underline;">Unsubscribe</a>
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                Leisurely &middot; Meal planning, minus the stress.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
   </table>
+
 </body>
 </html>`
 }
 
-function buildText(planName: string, inviterName: string, joinUrl: string): string {
-  return `${inviterName} has invited you to join "${planName}" on Leisurely.
+function buildText(
+  planName: string,
+  inviterName: string,
+  joinUrl: string,
+  startDate?: string,
+  endDate?: string
+): string {
+  const tripLine = buildTripLine(planName, startDate, endDate)
+  return `${inviterName} invited you to use Leisurely for your upcoming trip.
 
-Accept your invite: ${joinUrl}
+Trip: ${tripLine}
 
-Leisurely is a group vacation meal planner — plan meals, groceries, and packing together.
+Leisurely helps groups plan meals, groceries, and packing for trips — stress-free.
 
-If you weren't expecting this invite, you can safely ignore this email.`
+Join the trip: ${joinUrl}
+
+You'll need a free account to join. You can sign up at the link above.
+
+---
+If you weren't expecting this, you can safely ignore this email.
+Unsubscribe: mailto:unsubscribe@leisurely.app?subject=unsubscribe`
 }

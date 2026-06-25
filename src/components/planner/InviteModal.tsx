@@ -10,6 +10,8 @@ interface InviteModalProps {
   onClose: () => void
   planId: string
   planName: string
+  planStart?: string
+  planEnd?: string
   onConfirm: () => void
 }
 
@@ -17,7 +19,7 @@ function isValidEmail(e: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim())
 }
 
-export function InviteModal({ open, onClose, planId, planName, onConfirm }: InviteModalProps) {
+export function InviteModal({ open, onClose, planId, planName, planStart, planEnd, onConfirm }: InviteModalProps) {
   const { user, displayName } = useAuth()
   const [emailsRaw, setEmailsRaw] = useState('')
   const [sending, setSending] = useState(false)
@@ -44,7 +46,10 @@ export function InviteModal({ open, onClose, planId, planName, onConfirm }: Invi
     setError(null)
 
     const inviterName = displayName ?? user?.email ?? 'Someone'
-    const { error: sendError } = await sendInvites(planId, planName, inviterName, emails)
+    const { error: sendError } = await sendInvites(
+      planId, planName, inviterName, emails,
+      planStart && planEnd ? { startDate: planStart, endDate: planEnd } : undefined
+    )
 
     setSending(false)
 
