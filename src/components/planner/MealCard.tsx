@@ -64,6 +64,19 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
         </div>
       )}
 
+      {meal.assignedTo && meal.assignedTo.length > 0 && (
+        <div className="flex flex-wrap gap-0.5 mt-0.5">
+          {meal.assignedTo.slice(0, compact ? 1 : 3).map((name) => (
+            <span key={name} className="text-[9px] font-sans bg-sage/15 text-olive/60 rounded-full px-1.5 py-0.5 leading-none">
+              {name}
+            </span>
+          ))}
+          {compact && meal.assignedTo.length > 1 && (
+            <span className="text-[9px] text-ink-400">+{meal.assignedTo.length - 1}</span>
+          )}
+        </div>
+      )}
+
       {!compact && (
         <div className="flex items-center gap-1.5 mt-0.5">
           <button

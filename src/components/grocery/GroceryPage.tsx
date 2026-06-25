@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, type RefObject } from 'react'
 import { useGroceryList } from '../../hooks/useGroceryList'
 import { usePlanStore } from '../../stores/planStore'
 import { useUIStore } from '../../stores/uiStore'
+import { useAuth } from '../../hooks/useAuth'
 import { GroceryCategoryList } from './GroceryCategoryList'
 import { EmptyState } from '../ui/EmptyState'
 import { Button } from '../ui/Button'
@@ -14,6 +15,7 @@ export function GroceryPage() {
   const { groceryList, toggleGroceryItem, regenerate } = useGroceryList()
   const filterPerson = useUIStore((s) => s.groceryFilter)
   const setFilterPerson = useUIStore((s) => s.setGroceryFilter)
+  const { displayName } = useAuth()
   const [addName, setAddName] = useState('')
   const [addQty, setAddQty] = useState('1')
   const [addUnit, setAddUnit] = useState('')
@@ -22,7 +24,7 @@ export function GroceryPage() {
   function handleAddItem() {
     const name = addName.trim()
     if (!name) return
-    addManualGroceryItem(name, parseFloat(addQty) || 1, addUnit.trim())
+    addManualGroceryItem(name, parseFloat(addQty) || 1, addUnit.trim(), displayName ?? undefined)
     setAddName('')
     setAddQty('1')
     setAddUnit('')

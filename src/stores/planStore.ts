@@ -32,7 +32,7 @@ interface PlanStore extends AppState {
   regenerateGroceryList: () => void
   toggleGroceryItem: (id: string) => void
   updateGroceryItemAssignment: (id: string, assignedTo: string[]) => void
-  addManualGroceryItem: (name: string, quantity: number, unit: string) => void
+  addManualGroceryItem: (name: string, quantity: number, unit: string, addedBy?: string) => void
   removeGroceryItem: (id: string) => void
 
   // Trip snapshot actions
@@ -183,7 +183,7 @@ export const usePlanStore = create<PlanStore>()(
       }))
     },
 
-    addManualGroceryItem(name, quantity, unit) {
+    addManualGroceryItem(name, quantity, unit, addedBy) {
       const trimmedName = name.trim()
       const item: GroceryItem = {
         id: crypto.randomUUID(),
@@ -194,6 +194,7 @@ export const usePlanStore = create<PlanStore>()(
         mealIds: [],
         manual: true,
         category: inferCategory(trimmedName),
+        addedBy: addedBy || undefined,
       }
       set((s) => ({ groceryList: [...s.groceryList, item] }))
     },

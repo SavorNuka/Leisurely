@@ -9,13 +9,14 @@ import type { Note } from '../../types'
 
 interface NoteCardProps {
   note: Note
+  currentUserId?: string
   onLike: () => void
   onAddReply: (text: string) => void
   onRemoveReply: (replyId: string) => void
   onDelete: () => void
 }
 
-function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCardProps) {
+function NoteCard({ note, currentUserId, onLike, onAddReply, onRemoveReply, onDelete }: NoteCardProps) {
   const [replyOpen, setReplyOpen] = useState(false)
   const [replyText, setReplyText] = useState('')
 
@@ -26,36 +27,41 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
     setReplyOpen(false)
   }
 
+  const isOwn = !!currentUserId && note.authorId === currentUserId
+  const canDelete = !note.authorId || isOwn
   const authorLabel = note.authorName ?? null
-
   const replyCount = note.replies?.length ?? 0
   const liked = (note.likes ?? 0) > 0
 
   return (
     <div className="bg-white rounded-card shadow-card overflow-hidden">
       <div className="flex">
-        <div className="w-1 shrink-0 bg-terracotta/50 rounded-l-card" />
+        <div className={`w-1 shrink-0 rounded-l-card ${isOwn ? 'bg-sage/50' : 'bg-terracotta/50'}`} />
         <div className="flex-1 p-4">
           {authorLabel && (
-            <p className="text-xs text-olive/40 mb-1">{authorLabel}</p>
+            <p className="text-xs text-olive/40 mb-1">
+              {authorLabel}{isOwn ? ' (you)' : ''}
+            </p>
           )}
           <p className="text-sm text-olive whitespace-pre-wrap leading-relaxed pr-8">{note.text}</p>
           <div className="flex items-center justify-between mt-2">
             <time className="text-xs text-olive/40">
               {format(parseISO(note.createdAt), 'MMM d, yyyy · h:mm a')}
             </time>
-            <button
-              onClick={onDelete}
-              aria-label="Delete note"
-              className="text-olive/25 hover:text-red-400 transition-colors rounded p-1"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-                <path d="M3 4h10M6 4V3h4v1M5 4l.5 9h5L11 4" />
-              </svg>
-            </button>
+            {canDelete && (
+              <button
+                onClick={onDelete}
+                aria-label="Delete note"
+                className="text-olive/25 hover:text-red-400 transition-colors rounded p-1"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+                  <path d="M3 4h10M6 4V3h4v1M5 4l.5 9h5L11 4" />
+                </svg>
+              </button>
+            )}
           </div>
 
-          {/* Action bar — visible pill buttons */}
+          {/* Action bar */}
           <div className="flex items-center gap-1 mt-3 pt-2 border-t border-olive/8">
             <button
               onClick={onLike}
@@ -99,31 +105,38 @@ function NoteCard({ note, onLike, onAddReply, onRemoveReply, onDelete }: NoteCar
             className="overflow-hidden"
           >
             <div className="border-t border-olive/8 bg-olive/[0.02] px-4 py-3 space-y-3">
-              {(note.replies ?? []).map((reply) => (
-                <div key={reply.id} className="group flex gap-2.5">
-                  <div className="w-px bg-olive/15 shrink-0 mt-1" />
-                  <div className="flex-1 min-w-0">
-                    {reply.authorName && (
-                      <p className="text-xs text-olive/35 mb-0.5">{reply.authorName}</p>
-                    )}
-                    <p className="text-xs text-olive leading-relaxed whitespace-pre-wrap">{reply.text}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <time className="text-xs text-olive/35">
-                        {format(parseISO(reply.createdAt), 'MMM d · h:mm a')}
-                      </time>
-                      <button
-                        onClick={() => onRemoveReply(reply.id)}
-                        aria-label="Delete reply"
-                        className="text-olive/25 hover:text-red-400 transition-colors rounded p-0.5"
-                      >
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
-                          <line x1="3" y1="3" x2="9" y2="9" /><line x1="9" y1="3" x2="3" y2="9" />
-                        </svg>
-                      </button>
+              {(note.replies ?? []).map((reply) => {
+                const canDeleteReply = !reply.authorId || reply.authorId === currentUserId
+                return (
+                  <div key={reply.id} className="group flex gap-2.5">
+                    <div className="w-px bg-olive/15 shrink-0 mt-1" />
+                    <div className="flex-1 min-w-0">
+                      {reply.authorName && (
+                        <p className="text-xs text-olive/35 mb-0.5">
+                          {reply.authorName}{reply.authorId === currentUserId ? ' (you)' : ''}
+                        </p>
+                      )}
+                      <p className="text-xs text-olive leading-relaxed whitespace-pre-wrap">{reply.text}</p>
+                      <div className="flex items-center justify-between mt-1">
+                        <time className="text-xs text-olive/35">
+                          {format(parseISO(reply.createdAt), 'MMM d · h:mm a')}
+                        </time>
+                        {canDeleteReply && (
+                          <button
+                            onClick={() => onRemoveReply(reply.id)}
+                            aria-label="Delete reply"
+                            className="text-olive/25 hover:text-red-400 transition-colors rounded p-0.5"
+                          >
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round">
+                              <line x1="3" y1="3" x2="9" y2="9" /><line x1="9" y1="3" x2="3" y2="9" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
               {replyOpen && (
                 <div className="flex gap-2 pt-1">
@@ -155,13 +168,15 @@ export function NotesPage() {
   const likeNote = usePlanStore((s) => s.likeNote)
   const addReply = usePlanStore((s) => s.addReply)
   const removeReply = usePlanStore((s) => s.removeReply)
-  const { displayName } = useAuth()
+  const { user, displayName } = useAuth()
   const [text, setText] = useState('')
+
+  const authorStamp = displayName ?? user?.email?.split('@')[0] ?? undefined
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!text.trim()) return
-    addNote(text, displayName ?? undefined)
+    addNote(text, authorStamp)
     setText('')
   }
 
@@ -187,7 +202,13 @@ export function NotesPage() {
           }}
         />
         <div className="flex justify-between items-center">
-          <span className="text-xs text-olive/35">⌘↵ to post</span>
+          {user ? (
+            <span className="text-xs text-olive/35">
+              Posting as <span className="font-medium text-olive/50">{authorStamp}</span>
+            </span>
+          ) : (
+            <span className="text-xs text-olive/35">⌘↵ to post</span>
+          )}
           <Button type="submit" variant="primary" size="sm" disabled={!text.trim()}>
             Post note
           </Button>
@@ -213,8 +234,9 @@ export function NotesPage() {
               >
                 <NoteCard
                   note={note}
+                  currentUserId={user?.id}
                   onLike={() => likeNote(note.id)}
-                  onAddReply={(t) => addReply(note.id, t, displayName ?? undefined)}
+                  onAddReply={(t) => addReply(note.id, t, authorStamp)}
                   onRemoveReply={(rid) => removeReply(note.id, rid)}
                   onDelete={() => removeNote(note.id)}
                 />

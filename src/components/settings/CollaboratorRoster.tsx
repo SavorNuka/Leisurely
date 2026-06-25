@@ -135,6 +135,8 @@ export function CollaboratorRoster() {
           onClose={() => { setInviteOpen(false); reload() }}
           planId={plan.id}
           planName={plan.name}
+          planStart={plan.startDate ?? undefined}
+          planEnd={plan.endDate ?? undefined}
           onConfirm={() => { setInviteOpen(false); reload() }}
         />
       )}

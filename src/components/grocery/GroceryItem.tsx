@@ -42,7 +42,9 @@ export function GroceryItem({ item, onToggle, onAssign, onRemove }: GroceryItemP
         <span className={`flex-1 text-sm ${item.checked ? 'line-through text-olive/40' : 'text-olive'}`}>
           {item.name}
           {item.manual && (
-            <span className="ml-1.5 text-xs text-olive/30" title="Manually added">✍</span>
+            <span className="ml-1.5 text-xs text-olive/30" title="Manually added">
+              ✍{item.addedBy ? <span className="font-normal not-italic"> {item.addedBy}</span> : null}
+            </span>
           )}
         </span>
         <span className={`text-xs tabular-nums ${item.checked ? 'text-olive/30' : 'text-olive/60'}`}>

@@ -72,6 +72,7 @@ export interface GroceryItem {
   checked: boolean
   mealIds: string[]
   assignedTo?: string[]
+  addedBy?: string
   manual?: true
   category?: GroceryCategory
 }
@@ -113,6 +114,7 @@ export interface NoteReply {
   text: string
   createdAt: string
   authorName?: string
+  authorId?: string
 }
 
 export interface Note {
@@ -123,6 +125,7 @@ export interface Note {
   likedByMe?: boolean
   replies: NoteReply[]
   authorName?: string
+  authorId?: string
 }
 
 export type PackingCategory = 'clothes' | 'toiletries' | 'documents' | 'kitchen' | 'misc'
