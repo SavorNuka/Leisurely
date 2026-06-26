@@ -2,8 +2,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { loadFromDB } from './lib/db'
 import { usePlanStore } from './stores/planStore'
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Leisurely] Unhandled promise rejection', event.reason)
+})
 
 async function init() {
   try {
@@ -15,7 +20,9 @@ async function init() {
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </StrictMode>,
   )
 }
