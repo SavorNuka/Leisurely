@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useExportImport } from '../../hooks/useExportImport'
 import { useTripHistory } from '../../hooks/useTripHistory'
 import { DateRangePicker } from './DateRangePicker'
+import { DateRangeCalendar } from './DateRangeCalendar'
 import { MealGrid } from './MealGrid'
 import { DietaryFilter } from './DietaryFilter'
 import { InviteModal } from './InviteModal'
@@ -15,6 +16,7 @@ import { Button } from '../ui/Button'
 import { motion } from 'framer-motion'
 import { isConfigured } from '../../lib/supabase'
 import { pushPlan } from '../../lib/sync'
+import { toast } from '../../hooks/useToast'
 
 export function PlannerPage() {
   const plan = usePlanStore((s) => s.plan)
@@ -25,6 +27,7 @@ export function PlannerPage() {
   const [newStartDate, setNewStartDate] = useState('')
   const [newEndDate, setNewEndDate] = useState('')
   const [noDatesWarning, setNoDatesWarning] = useState(false)
+  const [calendarError, setCalendarError] = useState<string | null>(null)
   const [joinToken, setJoinToken] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null)
@@ -47,10 +50,17 @@ export function PlannerPage() {
     }
     setNoDatesWarning(false)
     const id = createNewPlan(newName.trim() || 'My Trip', newStartDate, newEndDate)
-    // Push immediately using a synchronous getState() snapshot so syncDown
-    // cannot overwrite the store between createNewPlan and sendInvites.
     if (user) {
-      await pushPlan(usePlanStore.getState().exportState(), user.id)
+      try {
+        const { error } = await pushPlan(usePlanStore.getState().exportState(), user.id)
+        if (error) {
+          toast('Could not save trip — check your connection and try again.', 'error')
+          return
+        }
+      } catch {
+        toast('Could not save trip — check your connection and try again.', 'error')
+        return
+      }
     }
     setPendingPlanId(id)
     setInviteOpen(true)
@@ -155,66 +165,55 @@ export function PlannerPage() {
 
           <div className="grid gap-4 sm:grid-cols-3" id="plan-cards">
             {/* Start a new trip */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, delay: 0.05 }}
-              className="bg-white rounded-card shadow-card p-5 space-y-4"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden="true">✈️</span>
-                <h3 className="font-serif font-semibold text-olive">Start a new trip</h3>
-              </div>
-              <Input
-                id="new-plan-name"
-                label="Trip name"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Tuscany Summer 2026"
-                onKeyDown={(e) => { if (e.key === 'Enter' && newName.trim()) handleCreate() }}
+            <div className="flex flex-col gap-4">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, delay: 0.05 }}
+                className="bg-white rounded-card shadow-card p-5 space-y-4"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden="true">✈️</span>
+                  <h3 className="font-serif font-semibold text-olive">Start a new trip</h3>
+                </div>
+                <Input
+                  id="new-plan-name"
+                  label="Trip name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Tuscany Summer 2026"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && newName.trim()) handleCreate() }}
+                />
+                <div className="flex flex-col gap-2">
+                  <Button variant="primary" className="w-full justify-center" onClick={handleCreate}>
+                    Create trip
+                  </Button>
+                  {user && isConfigured() && (
+                    <>
+                      <Button variant="ghost" className="w-full justify-center" onClick={() => { handleCreateWithInvite().catch(console.error) }}>
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.97 5.97 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.97 5.97 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+                        </svg>
+                        Plan with others
+                      </Button>
+                      {noDatesWarning && (
+                        <p className="text-xs text-terracotta bg-terracotta/8 rounded-card px-3 py-2">
+                          Set your trip dates before inviting — your group needs to know when to arrive.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </motion.div>
+              <DateRangeCalendar
+                startDate={newStartDate || null}
+                endDate={newEndDate || null}
+                onRangeChange={(start, end) => { setNewStartDate(start); setNewEndDate(end); setNoDatesWarning(false) }}
+                onError={setCalendarError}
+                maxDays={30}
               />
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-olive/70 mb-1">Start date</label>
-                  <input
-                    type="date"
-                    value={newStartDate}
-                    onChange={(e) => { setNewStartDate(e.target.value); setNoDatesWarning(false) }}
-                    className="w-full rounded-card border border-olive/20 bg-cream px-2 py-1.5 text-sm text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-olive/70 mb-1">End date</label>
-                  <input
-                    type="date"
-                    value={newEndDate}
-                    min={newStartDate || undefined}
-                    onChange={(e) => { setNewEndDate(e.target.value); setNoDatesWarning(false) }}
-                    className="w-full rounded-card border border-olive/20 bg-cream px-2 py-1.5 text-sm text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button variant="primary" className="w-full justify-center" onClick={handleCreate}>
-                  Create trip
-                </Button>
-                {user && isConfigured() && (
-                  <>
-                    <Button variant="ghost" className="w-full justify-center" onClick={handleCreateWithInvite}>
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.97 5.97 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.97 5.97 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
-                      </svg>
-                      Plan with others
-                    </Button>
-                    {noDatesWarning && (
-                      <p className="text-xs text-terracotta bg-terracotta/8 rounded-card px-3 py-2">
-                        Set your trip dates before inviting — your group needs to know when to arrive.
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            </motion.div>
+              {calendarError && <p className="text-xs text-red-500 px-1">{calendarError}</p>}
+            </div>
 
             {/* Join a trip */}
             <motion.div
