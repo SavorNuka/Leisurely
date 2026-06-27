@@ -65,6 +65,7 @@ serve(async (req) => {
     }
 
     const joinUrl = `${siteUrl}/join/${invite.token}`
+    const unsubUrl = `${supabaseUrl}/functions/v1/unsubscribe?email=${encodeURIComponent(email)}`
 
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -75,11 +76,12 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'Leisurely <invites@leisurelymeals.com>',
         to: email,
-        subject: `${inviterName} invited you to use Leisurely for your upcoming trip`,
-        html: buildHtml(planName, inviterName, joinUrl, startDate, endDate),
-        text: buildText(planName, inviterName, joinUrl, startDate, endDate),
+        subject: `You're invited to join ${planName} on Leisurely`,
+        html: buildHtml(planName, inviterName, joinUrl, unsubUrl, startDate, endDate),
+        text: buildText(planName, inviterName, joinUrl, unsubUrl, startDate, endDate),
         headers: {
-          'List-Unsubscribe': '<mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe>',
+          'List-Unsubscribe': `<${unsubUrl}>, <mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
         },
       }),
     })
@@ -111,26 +113,29 @@ function buildHtml(
   planName: string,
   inviterName: string,
   joinUrl: string,
+  unsubUrl: string,
   startDate?: string,
   endDate?: string
 ): string {
   const tripLine = buildTripLine(planName, startDate, endDate)
   const preheader = `${inviterName} invited you to plan your trip together on Leisurely — where groups plan meals, groceries, and packing stress-free.`
-  // Pad to ~100 chars with zero-width spaces so email clients don't pull in body text
-  const paddedPreheader = preheader + '&#8203;'.repeat(Math.max(0, 90 - preheader.length))
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${inviterName} invited you to use Leisurely for your upcoming trip</title>
+  <title>You're invited to join ${planName} on Leisurely</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F2F1EC;font-family:Arial,Helvetica,sans-serif;">
 
   <!-- Preheader -->
   <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
-    ${paddedPreheader}
+    ${preheader}
+  </div>
+  <!-- Invisible padding (industry-standard &nbsp;&zwnj; pairs) -->
+  <div style="display:none;font-size:1px;color:#F2F1EC;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
   </div>
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F2F1EC;padding:32px 16px;">
@@ -152,7 +157,7 @@ function buildHtml(
 
               <!-- Headline -->
               <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#1C1A18;line-height:1.35;">
-                ${inviterName} invited you to use Leisurely for your upcoming trip.
+                ${inviterName} invited you to join <em>${escHtml(planName)}</em> on Leisurely.
               </p>
 
               <!-- Trip chip -->
@@ -206,7 +211,7 @@ function buildHtml(
               <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7A756C;line-height:1.6;">
                 <a href="${joinUrl}" style="color:#7A756C;text-decoration:underline;">Direct link</a>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
-                <a href="mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe" style="color:#7A756C;text-decoration:underline;">Unsubscribe</a>
+                <a href="${unsubUrl}" style="color:#7A756C;text-decoration:underline;">Unsubscribe</a>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 Leisurely &middot; Meal planning, minus the stress.
               </p>
@@ -226,11 +231,12 @@ function buildText(
   planName: string,
   inviterName: string,
   joinUrl: string,
+  unsubUrl: string,
   startDate?: string,
   endDate?: string
 ): string {
   const tripLine = buildTripLine(planName, startDate, endDate)
-  return `${inviterName} invited you to use Leisurely for your upcoming trip.
+  return `${inviterName} invited you to join ${planName} on Leisurely.
 
 Trip: ${tripLine}
 
@@ -242,5 +248,5 @@ You'll need a free account to join. You can sign up at the link above.
 
 ---
 If you weren't expecting this, you can safely ignore this email.
-Unsubscribe: mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe`
+Unsubscribe: ${unsubUrl}`
 }
