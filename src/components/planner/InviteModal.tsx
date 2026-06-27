@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
-import { sendInvites } from '../../lib/sync'
+import { pushPlan, sendInvites } from '../../lib/sync'
 import { useAuth } from '../../hooks/useAuth'
+import { usePlanStore } from '../../stores/planStore'
 import { toast } from '../../hooks/useToast'
 
 interface InviteModalProps {
@@ -21,6 +22,7 @@ function isValidEmail(e: string) {
 
 export function InviteModal({ open, onClose, planId, planName, planStart, planEnd, onConfirm }: InviteModalProps) {
   const { user, displayName } = useAuth()
+  const exportState = usePlanStore((s) => s.exportState)
   const [emailsRaw, setEmailsRaw] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +46,10 @@ export function InviteModal({ open, onClose, planId, planName, planStart, planEn
 
     setSending(true)
     setError(null)
+
+    if (user) {
+      await pushPlan(exportState(), user.id)
+    }
 
     const inviterName = displayName ?? user?.email ?? 'Someone'
     const { error: sendError } = await sendInvites(
