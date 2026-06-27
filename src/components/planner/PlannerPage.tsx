@@ -14,6 +14,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { motion } from 'framer-motion'
 import { isConfigured } from '../../lib/supabase'
+import { pushPlan } from '../../lib/sync'
 
 export function PlannerPage() {
   const plan = usePlanStore((s) => s.plan)
@@ -39,13 +40,18 @@ export function PlannerPage() {
     createNewPlan(newName.trim() || 'My Trip', newStartDate || undefined, newEndDate || undefined)
   }
 
-  function handleCreateWithInvite() {
+  async function handleCreateWithInvite() {
     if (!newStartDate || !newEndDate) {
       setNoDatesWarning(true)
       return
     }
     setNoDatesWarning(false)
     const id = createNewPlan(newName.trim() || 'My Trip', newStartDate, newEndDate)
+    // Push immediately using a synchronous getState() snapshot so syncDown
+    // cannot overwrite the store between createNewPlan and sendInvites.
+    if (user) {
+      await pushPlan(usePlanStore.getState().exportState(), user.id)
+    }
     setPendingPlanId(id)
     setInviteOpen(true)
   }
