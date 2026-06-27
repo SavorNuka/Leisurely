@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useRef, useEffect, type ReactNode } from 'react'
 import { Joyride, type EventData, STATUS, ACTIONS } from 'react-joyride'
 import { TOUR_STEPS } from '../../lib/tourSteps'
 import { useAuth } from '../../hooks/useAuth'
@@ -23,6 +23,8 @@ export function TourProvider({ children }: TourProviderProps) {
   const [tourKey, setTourKey] = useState(0)
 
   const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
+  const storageKeyRef = useRef(storageKey)
+  useEffect(() => { storageKeyRef.current = storageKey }, [storageKey])
 
   const startTour = useCallback(() => {
     setRun(false)
@@ -34,7 +36,11 @@ export function TourProvider({ children }: TourProviderProps) {
     const { status, action } = data
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED || action === ACTIONS.CLOSE) {
       setRun(false)
-      localStorage.setItem(storageKey, 'true')
+      // Write the current user-specific key (via ref so it's always fresh).
+      // Also write the base key so AppShell can detect dismissal even if
+      // the user-specific key wasn't set yet when the dismiss fired.
+      localStorage.setItem(storageKeyRef.current, 'true')
+      localStorage.setItem('leisurely:tour_seen', 'true')
     }
   }
 

@@ -50,20 +50,26 @@ export function PlannerPage() {
     }
     setNoDatesWarning(false)
     const id = createNewPlan(newName.trim() || 'My Trip', newStartDate, newEndDate)
+    // Set modal state before the first await so these batch with createNewPlan,
+    // preventing the plan view from rendering before the modal is ready.
+    setPendingPlanId(id)
+    setInviteOpen(true)
     if (user) {
       try {
         const { error } = await pushPlan(usePlanStore.getState().exportState(), user.id)
         if (error) {
           toast('Could not save trip — check your connection and try again.', 'error')
+          setInviteOpen(false)
+          setPendingPlanId(null)
           return
         }
       } catch {
         toast('Could not save trip — check your connection and try again.', 'error')
+        setInviteOpen(false)
+        setPendingPlanId(null)
         return
       }
     }
-    setPendingPlanId(id)
-    setInviteOpen(true)
   }
 
   function closeInvite() {
@@ -76,7 +82,7 @@ export function PlannerPage() {
 
   return (
     <>
-      {!plan ? (
+      {!plan || (inviteOpen && !!pendingPlanId) ? (
         <div className="py-8 space-y-8">
           {/* Welcome hero */}
           <div className="text-center space-y-4 pt-4">
