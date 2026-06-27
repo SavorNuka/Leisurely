@@ -289,7 +289,8 @@ export async function sendInvites(
   if (error) return { error: error.message }
   const failed = ((data?.results ?? []) as { email: string; error?: string }[]).filter((r) => r.error)
   if (failed.length > 0) {
-    return { error: `Could not send to: ${failed.map((r) => r.email).join(', ')}. Check that your Resend API key and domain are configured in Supabase.` }
+    const detail = failed[0].error ?? 'unknown error'
+    return { error: `Resend rejected ${failed[0].email}: ${detail}` }
   }
   return { error: null }
 }
