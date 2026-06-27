@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import { Joyride, type EventData, STATUS } from 'react-joyride'
+import { Joyride, type EventData, STATUS, ACTIONS } from 'react-joyride'
 import { TOUR_STEPS } from '../../lib/tourSteps'
+import { useAuth } from '../../hooks/useAuth'
 
 interface TourContextValue {
   startTour: () => void
@@ -17,24 +18,29 @@ interface TourProviderProps {
 }
 
 export function TourProvider({ children }: TourProviderProps) {
+  const { user } = useAuth()
   const [run, setRun] = useState(false)
+  const [tourKey, setTourKey] = useState(0)
+
+  const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
 
   function startTour() {
-    setRun(false)
-    requestAnimationFrame(() => setRun(true))
+    setTourKey((k) => k + 1)
+    setRun(true)
   }
 
   function handleEvent(data: EventData) {
-    const { status } = data
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+    const { status, action } = data
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED || action === ACTIONS.CLOSE) {
       setRun(false)
-      localStorage.setItem('leisurely:tour_seen', 'true')
+      localStorage.setItem(storageKey, 'true')
     }
   }
 
   return (
     <TourContext.Provider value={{ startTour }}>
       <Joyride
+        key={tourKey}
         steps={TOUR_STEPS}
         run={run}
         continuous
