@@ -27,7 +27,7 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const resendKey = Deno.env.get('RESEND_API_KEY')!
-  const siteUrl = Deno.env.get('SITE_URL') ?? 'https://leisurely.app'
+  const siteUrl = Deno.env.get('SITE_URL') ?? 'https://leisurelymeals.com'
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -73,13 +73,13 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Leisurely <invites@leisurely.app>',
+        from: 'Leisurely <invites@leisurelymeals.com>',
         to: email,
         subject: `${inviterName} invited you to use Leisurely for your upcoming trip`,
         html: buildHtml(planName, inviterName, joinUrl, startDate, endDate),
         text: buildText(planName, inviterName, joinUrl, startDate, endDate),
         headers: {
-          'List-Unsubscribe': '<mailto:unsubscribe@leisurely.app?subject=unsubscribe>',
+          'List-Unsubscribe': '<mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe>',
         },
       }),
     })
@@ -206,7 +206,7 @@ function buildHtml(
               <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7A756C;line-height:1.6;">
                 <a href="${joinUrl}" style="color:#7A756C;text-decoration:underline;">Direct link</a>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
-                <a href="mailto:unsubscribe@leisurely.app?subject=unsubscribe" style="color:#7A756C;text-decoration:underline;">Unsubscribe</a>
+                <a href="mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe" style="color:#7A756C;text-decoration:underline;">Unsubscribe</a>
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 Leisurely &middot; Meal planning, minus the stress.
               </p>
@@ -242,5 +242,5 @@ You'll need a free account to join. You can sign up at the link above.
 
 ---
 If you weren't expecting this, you can safely ignore this email.
-Unsubscribe: mailto:unsubscribe@leisurely.app?subject=unsubscribe`
+Unsubscribe: mailto:unsubscribe@leisurelymeals.com?subject=unsubscribe`
 }
