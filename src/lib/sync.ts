@@ -348,12 +348,16 @@ export async function processInvite(
   if (invite.accepted_at) return { planId: null, error: 'This invite has already been accepted.' }
   if (new Date(invite.expires_at) < new Date()) return { planId: null, error: 'This invite has expired.' }
 
-  await supabase.from('plan_collaborators').upsert({
+  const { error: upsertError } = await supabase.from('plan_collaborators').upsert({
     plan_id: invite.plan_id,
     user_id: userId,
     invited_by: null,
     role: 'editor',
   })
+
+  if (upsertError) {
+    return { planId: null, error: 'Could not join the trip. The invite may have already been used or the trip no longer exists.' }
+  }
 
   await supabase
     .from('plan_invites')
