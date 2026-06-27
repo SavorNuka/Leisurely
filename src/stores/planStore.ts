@@ -285,8 +285,11 @@ export const usePlanStore = create<PlanStore>()(
     },
 
     importState(state) {
+      const plan = state.plan
+        ? { ...state.plan, days: state.plan.days ?? [] }
+        : null
       set({
-        plan: state.plan ?? null,
+        plan,
         meals: state.meals ?? {},
         groceryList: state.groceryList ?? [],
         notes: (state.notes ?? []).map((n) => ({ ...n, likes: n.likes ?? 0, replies: n.replies ?? [] })),

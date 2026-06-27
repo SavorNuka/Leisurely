@@ -35,7 +35,7 @@ export function MealGrid({ days }: MealGridProps) {
   const meals = usePlanStore((s) => s.meals)
   const activeFilters = usePlanStore((s) => s.activeDietaryFilters)
 
-  if (days.length === 0) return null
+  if (!days || days.length === 0) return null
 
   function mealMatchesFilters(mealId: string | null, filters: DietaryTag[]): boolean {
     if (filters.length === 0) return true
