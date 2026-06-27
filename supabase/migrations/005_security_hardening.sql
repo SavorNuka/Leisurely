@@ -29,10 +29,11 @@ $$;
 -- can_access_plan — used in RLS policies; pin path and fully-qualify all refs
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.can_access_plan(p_plan_id UUID, p_user_id UUID)
-RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER STABLE
 SET search_path = ''
 AS $$
-  SELECT EXISTS (
+BEGIN
+  RETURN EXISTS (
     SELECT 1 FROM public.plans
     WHERE id = p_plan_id
       AND (user_id = p_user_id OR is_public = true)
@@ -41,4 +42,5 @@ AS $$
     WHERE plan_id = p_plan_id
       AND user_id = p_user_id
   );
+END;
 $$;
