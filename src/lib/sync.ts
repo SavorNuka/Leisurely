@@ -283,10 +283,15 @@ export async function sendInvites(
   planDates?: { startDate: string; endDate: string }
 ): Promise<{ error: string | null }> {
   if (!isConfigured() || !supabase) return { error: 'Supabase not configured' }
-  const { error } = await supabase.functions.invoke('invite-collaborator', {
+  const { data, error } = await supabase.functions.invoke('invite-collaborator', {
     body: { planId, planName, inviterName, emails, ...planDates },
   })
-  return { error: error?.message ?? null }
+  if (error) return { error: error.message }
+  const failed = ((data?.results ?? []) as { email: string; error?: string }[]).filter((r) => r.error)
+  if (failed.length > 0) {
+    return { error: `Could not send to: ${failed.map((r) => r.email).join(', ')}. Check that your Resend API key and domain are configured in Supabase.` }
+  }
+  return { error: null }
 }
 
 export async function processInvite(

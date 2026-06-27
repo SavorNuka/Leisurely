@@ -14,7 +14,8 @@ function ShellInner({ children }: { children: ReactNode }) {
   const { startTour } = useTour()
 
   useEffect(() => {
-    if (user && !localStorage.getItem('leisurely:tour_seen')) {
+    const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
+    if (user && !localStorage.getItem(storageKey)) {
       const timer = setTimeout(() => startTour(), 900)
       return () => clearTimeout(timer)
     }

@@ -13,7 +13,17 @@ export function SharePlan() {
   const exportState = usePlanStore((s) => s.exportState)
   const [confirmPublic, setConfirmPublic] = useState(false)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [noDatesWarning, setNoDatesWarning] = useState(false)
   const { user } = useAuth()
+
+  function handleEmailInviteClick() {
+    if (!plan?.startDate || !plan?.endDate) {
+      setNoDatesWarning(true)
+      return
+    }
+    setNoDatesWarning(false)
+    setInviteOpen(true)
+  }
 
   function handleCopy() {
     const link = encodeShareLink(exportState())
@@ -53,7 +63,7 @@ export function SharePlan() {
               <Button
                 variant="primary"
                 className="w-full justify-center"
-                onClick={() => setInviteOpen(true)}
+                onClick={handleEmailInviteClick}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2.5 5.5A1.5 1.5 0 014 4h12a1.5 1.5 0 011.5 1.5v9A1.5 1.5 0 0116 16H4a1.5 1.5 0 01-1.5-1.5v-9z" />
@@ -61,6 +71,11 @@ export function SharePlan() {
                 </svg>
                 Send invitation email
               </Button>
+              {noDatesWarning && (
+                <p className="text-xs text-terracotta bg-terracotta/8 rounded-card px-3 py-2">
+                  Set your trip dates before sending invites so your group knows when to arrive.
+                </p>
+              )}
             </div>
           )}
 
