@@ -71,6 +71,7 @@ export function SettingsPage() {
           onClick={() => {
             const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
             localStorage.removeItem(storageKey)
+            localStorage.removeItem('leisurely:tour_seen')
             startTour()
           }}
         >
