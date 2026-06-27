@@ -25,8 +25,9 @@ export function TourProvider({ children }: TourProviderProps) {
   const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
 
   function startTour() {
+    setRun(false)
     setTourKey((k) => k + 1)
-    setRun(true)
+    requestAnimationFrame(() => requestAnimationFrame(() => setRun(true)))
   }
 
   function handleEvent(data: EventData) {
@@ -44,7 +45,6 @@ export function TourProvider({ children }: TourProviderProps) {
         steps={TOUR_STEPS}
         run={run}
         continuous
-        scrollToFirstStep
         onEvent={handleEvent}
         options={{
           primaryColor: '#7D9B76',

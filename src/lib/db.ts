@@ -53,6 +53,19 @@ function getDB() {
   return dbPromise
 }
 
+const EMPTY_STATE = { plan: null, meals: {} as Record<string, Meal>, groceryList: [] as GroceryItem[], notes: [] as Note[], packingList: [] as PackingItem[] }
+
+const ALL_STORES = ['plan', 'meals', 'groceryList', 'notes', 'packingList', 'meta'] as const
+
+async function clearAllStores() {
+  try {
+    const db = await getDB()
+    const tx = db.transaction(ALL_STORES, 'readwrite')
+    await Promise.all(ALL_STORES.map((s) => tx.objectStore(s).clear()))
+    await tx.done
+  } catch (_) {}
+}
+
 export async function loadFromDB(): Promise<{
   plan: Plan | null
   meals: Record<string, Meal>
@@ -60,25 +73,31 @@ export async function loadFromDB(): Promise<{
   notes: Note[]
   packingList: PackingItem[]
 }> {
-  const db = await getDB()
-  const activePlanId = await db.get('meta', 'activePlanId')
+  try {
+    const db = await getDB()
+    const activePlanId = await db.get('meta', 'activePlanId')
 
-  let plan: Plan | null = null
-  if (activePlanId) {
-    plan = (await db.get('plan', activePlanId)) ?? null
+    let plan: Plan | null = null
+    if (activePlanId) {
+      plan = (await db.get('plan', activePlanId)) ?? null
+    }
+
+    const mealsArr = await db.getAll('meals')
+    const meals: Record<string, Meal> = {}
+    for (const meal of mealsArr) {
+      meals[meal.id] = meal
+    }
+
+    const groceryList = await db.getAll('groceryList')
+    const notes = await db.getAll('notes')
+    const packingList = await db.getAll('packingList')
+
+    return { plan, meals, groceryList, notes, packingList }
+  } catch (err) {
+    console.warn('[Leisurely] DB load failed, resetting local data:', err)
+    await clearAllStores()
+    return EMPTY_STATE
   }
-
-  const mealsArr = await db.getAll('meals')
-  const meals: Record<string, Meal> = {}
-  for (const meal of mealsArr) {
-    meals[meal.id] = meal
-  }
-
-  const groceryList = await db.getAll('groceryList')
-  const notes = await db.getAll('notes')
-  const packingList = await db.getAll('packingList')
-
-  return { plan, meals, groceryList, notes, packingList }
 }
 
 export async function savePlan(plan: Plan) {

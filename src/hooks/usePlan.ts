@@ -6,9 +6,9 @@ import { format, addDays } from 'date-fns'
 export function usePlan() {
   const store = usePlanStore()
 
-  function createNewPlan(name: string): string {
-    const startDate = format(new Date(), 'yyyy-MM-dd')
-    const endDate = format(addDays(new Date(), 6), 'yyyy-MM-dd')
+  function createNewPlan(name: string, startDateOverride?: string, endDateOverride?: string): string {
+    const startDate = startDateOverride ?? format(new Date(), 'yyyy-MM-dd')
+    const endDate = endDateOverride ?? format(addDays(new Date(), 6), 'yyyy-MM-dd')
     const plan: Plan = {
       id: crypto.randomUUID(),
       name,

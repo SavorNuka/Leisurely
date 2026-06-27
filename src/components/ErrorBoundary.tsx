@@ -14,18 +14,34 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('[Leisurely] Uncaught render error', error, info.componentStack)
   }
 
+  handleClearAndReload = () => {
+    try {
+      localStorage.clear()
+      indexedDB.deleteDatabase('leisurely-db')
+    } catch (_) {}
+    window.location.reload()
+  }
+
   render() {
     if (this.state.error) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-cream px-6 text-center">
           <p className="font-serif text-2xl text-olive mb-2">Something went wrong</p>
-          <p className="text-sm text-olive/60 mb-6">Reload the page to continue. Your data is safe.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="rounded-lg bg-sage px-4 py-2 text-sm font-medium text-white hover:bg-sage/90 transition-colors"
-          >
-            Reload
-          </button>
+          <p className="text-sm text-olive/60 mb-6">Reload the page to continue. If the error persists, clearing local data will fix it.</p>
+          <div className="flex flex-col gap-3 items-center">
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-lg bg-sage px-4 py-2 text-sm font-medium text-white hover:bg-sage/90 transition-colors"
+            >
+              Reload
+            </button>
+            <button
+              onClick={this.handleClearAndReload}
+              className="text-xs text-olive/40 underline underline-offset-2"
+            >
+              Clear local data and reload
+            </button>
+          </div>
         </div>
       )
     }
