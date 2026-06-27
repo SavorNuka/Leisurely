@@ -375,8 +375,13 @@ export function subscribeToRealtime(
 ): RealtimeUnsub {
   if (!isConfigured() || !supabase) return () => {}
 
+  // Each call gets a unique channel name — Supabase throws if you add
+  // postgres_changes listeners to an already-subscribed channel, which
+  // happens when multiple useAuth() instances race to subscribe to the
+  // same plan (e.g. the four components on the Settings page).
+  const channelId = Math.random().toString(36).slice(2, 8)
   const channel = supabase
-    .channel(`leisurely:${planId}`)
+    .channel(`leisurely:${planId}:${channelId}`)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'plans', filter: `id=eq.${planId}` }, onPlanChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'meals', filter: `plan_id=eq.${planId}` }, onMealChange)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'grocery_items', filter: `plan_id=eq.${planId}` }, onGroceryChange)
