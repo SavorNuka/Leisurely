@@ -20,7 +20,7 @@ function isValidEmail(e: string) {
 }
 
 export function InviteModal({ open, onClose, planId, planName, planStart, planEnd, onConfirm }: InviteModalProps) {
-  const { user, displayName } = useAuth()
+  const { displayName } = useAuth()
   const [emailsRaw, setEmailsRaw] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
