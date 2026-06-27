@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 import { Joyride, type EventData, STATUS, ACTIONS } from 'react-joyride'
 import { TOUR_STEPS } from '../../lib/tourSteps'
 import { useAuth } from '../../hooks/useAuth'
@@ -24,11 +24,11 @@ export function TourProvider({ children }: TourProviderProps) {
 
   const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
 
-  function startTour() {
+  const startTour = useCallback(() => {
     setRun(false)
     setTourKey((k) => k + 1)
-    requestAnimationFrame(() => requestAnimationFrame(() => setRun(true)))
-  }
+    setTimeout(() => setRun(true), 150)
+  }, [])
 
   function handleEvent(data: EventData) {
     const { status, action } = data

@@ -48,7 +48,12 @@ export function InviteModal({ open, onClose, planId, planName, planStart, planEn
     setError(null)
 
     if (user) {
-      await pushPlan(exportState(), user.id)
+      const { error: pushError } = await pushPlan(exportState(), user.id)
+      if (pushError) {
+        setSending(false)
+        setError(`Could not save plan before inviting: ${pushError}`)
+        return
+      }
     }
 
     const inviterName = displayName ?? user?.email ?? 'Someone'

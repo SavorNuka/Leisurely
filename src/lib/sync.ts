@@ -8,11 +8,11 @@ type RealtimeUnsub = () => void
 export async function pushPlan(
   state: AppState,
   userId: string
-): Promise<void> {
-  if (!isConfigured() || !supabase || !state.plan) return
+): Promise<{ error: string | null }> {
+  if (!isConfigured() || !supabase || !state.plan) return { error: null }
   const { plan, meals, groceryList } = state
 
-  await supabase.from('plans').upsert({
+  const { error: planError } = await supabase.from('plans').upsert({
     id: plan.id,
     user_id: userId,
     name: plan.name,
@@ -23,6 +23,7 @@ export async function pushPlan(
     updated_at: plan.updatedAt,
     created_at: plan.createdAt,
   })
+  if (planError) return { error: planError.message }
 
   const mealRows = Object.values(meals).map((m) => ({
     id: m.id,
@@ -46,6 +47,8 @@ export async function pushPlan(
   if (groceryRows.length > 0) {
     await supabase.from('grocery_items').insert(groceryRows)
   }
+
+  return { error: null }
 }
 
 export async function pushNotes(
