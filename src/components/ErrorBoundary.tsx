@@ -27,12 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-cream px-6 text-center">
           <p className="font-serif text-2xl text-olive mb-2">Something went wrong</p>
-          <p className="text-sm text-olive/60 mb-4">Reload the page to continue. If the error persists, clearing local data will fix it.</p>
-          <pre className="mb-6 max-w-lg w-full text-left bg-white/70 rounded-lg p-3 text-xs text-red-700 overflow-x-auto whitespace-pre-wrap break-words border border-red-200">
-            {this.state.error.message}
-            {'\n'}
-            {this.state.error.stack}
-          </pre>
+          <p className="text-sm text-olive/60 mb-6">Reload the page to continue. If the error persists, clearing local data will fix it.</p>
           <div className="flex flex-col gap-3 items-center">
             <button
               onClick={() => window.location.reload()}
