@@ -9,7 +9,7 @@
 -- rls_auto_enable — Supabase-internal function
 -- Revoke public RPC access; pin search_path so schema resolution is stable.
 -- ─────────────────────────────────────────────────────────────────────────────
-REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
 ALTER  FUNCTION public.rls_auto_enable() SET search_path = '';
 
 -- ─────────────────────────────────────────────────────────────────────────────
