@@ -33,12 +33,16 @@ export function CollaboratorRoster() {
 
   const reload = useCallback(async () => {
     if (!plan) return
-    const [c, i] = await Promise.all([
-      getCollaboratorsWithProfiles(plan.id),
-      getPendingInvites(plan.id),
-    ])
-    setCollabs(c)
-    setInvites(i)
+    try {
+      const [c, i] = await Promise.all([
+        getCollaboratorsWithProfiles(plan.id),
+        getPendingInvites(plan.id),
+      ])
+      setCollabs(c)
+      setInvites(i)
+    } catch {
+      // Silently stay empty on network/RLS errors rather than crashing
+    }
   }, [plan])
 
   useEffect(() => { reload() }, [reload])

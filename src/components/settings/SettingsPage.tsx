@@ -6,6 +6,7 @@ import { ProfileCard } from './ProfileCard'
 import { CollaboratorRoster } from './CollaboratorRoster'
 import { usePlan } from '../../hooks/usePlan'
 import { useTour } from '../tour/TourProvider'
+import { useAuth } from '../../hooks/useAuth'
 import { usePWAInstall } from '../../hooks/usePWAInstall'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
@@ -13,6 +14,7 @@ import { Modal } from '../ui/Modal'
 export function SettingsPage() {
   const { plan, clearPlan } = usePlan()
   const { startTour } = useTour()
+  const { user } = useAuth()
   const { canPrompt, install, isStandalone, isIOS } = usePWAInstall()
   const [confirmClear, setConfirmClear] = useState(false)
 
@@ -67,7 +69,8 @@ export function SettingsPage() {
           variant="ghost"
           size="sm"
           onClick={() => {
-            localStorage.removeItem('leisurely:tour_seen')
+            const storageKey = `leisurely:tour_seen${user?.id ? `:${user.id}` : ''}`
+            localStorage.removeItem(storageKey)
             startTour()
           }}
         >

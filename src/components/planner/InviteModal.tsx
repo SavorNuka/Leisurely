@@ -45,7 +45,7 @@ export function InviteModal({ open, onClose, planId, planName, planStart, planEn
     setSending(true)
     setError(null)
 
-    const inviterName = displayName ?? user?.email ?? 'Someone'
+    const inviterName = displayName ?? 'Someone'
     const { error: sendError } = await sendInvites(
       planId, planName, inviterName, emails,
       planStart && planEnd ? { startDate: planStart, endDate: planEnd } : undefined
