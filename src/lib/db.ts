@@ -24,6 +24,11 @@ interface LeisurelyDB extends DBSchema {
 const DB_NAME = 'leisurely-db'
 const DB_VERSION = 4
 
+// Bump this whenever a deploy changes stored data shapes incompatibly.
+// On mismatch, all local stores are cleared automatically so users never
+// see the post-deploy error screen.
+const APP_SCHEMA_VERSION = '1'
+
 let dbPromise: Promise<IDBPDatabase<LeisurelyDB>> | null = null
 
 function getDB() {
@@ -75,6 +80,15 @@ export async function loadFromDB(): Promise<{
 }> {
   try {
     const db = await getDB()
+
+    const storedSchemaVersion = await db.get('meta', 'schemaVersion')
+    if (storedSchemaVersion !== APP_SCHEMA_VERSION) {
+      console.info('[Leisurely] Schema version mismatch, resetting local data')
+      await clearAllStores()
+      await db.put('meta', APP_SCHEMA_VERSION, 'schemaVersion')
+      return EMPTY_STATE
+    }
+
     const activePlanId = await db.get('meta', 'activePlanId')
 
     let plan: Plan | null = null
