@@ -21,6 +21,9 @@ export function PlannerPage() {
   const { user, displayName } = useAuth()
   const { handleImport } = useExportImport()
   const [newName, setNewName] = useState('')
+  const [newStartDate, setNewStartDate] = useState('')
+  const [newEndDate, setNewEndDate] = useState('')
+  const [noDatesWarning, setNoDatesWarning] = useState(false)
   const [joinToken, setJoinToken] = useState('')
   const [inviteOpen, setInviteOpen] = useState(false)
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null)
@@ -33,11 +36,16 @@ export function PlannerPage() {
   const greetingLine = displayName ? `${timeGreeting}, ${displayName}` : timeGreeting
 
   function handleCreate() {
-    createNewPlan(newName.trim() || 'My Trip')
+    createNewPlan(newName.trim() || 'My Trip', newStartDate || undefined, newEndDate || undefined)
   }
 
   function handleCreateWithInvite() {
-    const id = createNewPlan(newName.trim() || 'My Trip')
+    if (!newStartDate || !newEndDate) {
+      setNoDatesWarning(true)
+      return
+    }
+    setNoDatesWarning(false)
+    const id = createNewPlan(newName.trim() || 'My Trip', newStartDate, newEndDate)
     setPendingPlanId(id)
     setInviteOpen(true)
   }
@@ -159,17 +167,45 @@ export function PlannerPage() {
                 placeholder="e.g. Tuscany Summer 2026"
                 onKeyDown={(e) => { if (e.key === 'Enter' && newName.trim()) handleCreate() }}
               />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-olive/70 mb-1">Start date</label>
+                  <input
+                    type="date"
+                    value={newStartDate}
+                    onChange={(e) => { setNewStartDate(e.target.value); setNoDatesWarning(false) }}
+                    className="w-full rounded-card border border-olive/20 bg-cream px-2 py-1.5 text-sm text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-olive/70 mb-1">End date</label>
+                  <input
+                    type="date"
+                    value={newEndDate}
+                    min={newStartDate || undefined}
+                    onChange={(e) => { setNewEndDate(e.target.value); setNoDatesWarning(false) }}
+                    className="w-full rounded-card border border-olive/20 bg-cream px-2 py-1.5 text-sm text-olive focus:border-sage focus:ring-1 focus:ring-sage focus:outline-none"
+                  />
+                </div>
+              </div>
               <div className="flex flex-col gap-2">
                 <Button variant="primary" className="w-full justify-center" onClick={handleCreate}>
                   Create trip
                 </Button>
-                {user && (
-                  <Button variant="ghost" className="w-full justify-center" onClick={handleCreateWithInvite}>
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.97 5.97 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.97 5.97 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
-                    </svg>
-                    Plan with others
-                  </Button>
+                {user && isConfigured() && (
+                  <>
+                    <Button variant="ghost" className="w-full justify-center" onClick={handleCreateWithInvite}>
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.97 5.97 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 12.094A5.97 5.97 0 004 15v1H1v-1a3 3 0 013.75-2.906z" />
+                      </svg>
+                      Plan with others
+                    </Button>
+                    {noDatesWarning && (
+                      <p className="text-xs text-terracotta bg-terracotta/8 rounded-card px-3 py-2">
+                        Set your trip dates before inviting — your group needs to know when to arrive.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </motion.div>
@@ -264,8 +300,8 @@ export function PlannerPage() {
           onClose={closeInvite}
           planId={invitePlanId}
           planName={invitePlanName}
-          planStart={plan?.startDate ?? undefined}
-          planEnd={plan?.endDate ?? undefined}
+          planStart={plan?.startDate ?? (newStartDate || undefined)}
+          planEnd={plan?.endDate ?? (newEndDate || undefined)}
           onConfirm={closeInvite}
         />
       )}
