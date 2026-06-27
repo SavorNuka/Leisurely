@@ -36,7 +36,7 @@ export function DateRangePicker() {
 
       {error && <p className="text-xs text-red-500 px-1">{error}</p>}
 
-      {plan.days.length > 0 && (
+      {(plan.days?.length ?? 0) > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {plan.days.map((day, i) => (
             <span
@@ -51,7 +51,7 @@ export function DateRangePicker() {
       )}
 
       <p className="text-xs text-olive/50">
-        {plan.days.length} day{plan.days.length !== 1 ? 's' : ''} planned
+        {plan.days?.length ?? 0} day{(plan.days?.length ?? 0) !== 1 ? 's' : ''} planned
       </p>
     </div>
   )

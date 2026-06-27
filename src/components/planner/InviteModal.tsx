@@ -45,21 +45,25 @@ export function InviteModal({ open, onClose, planId, planName, planStart, planEn
     setSending(true)
     setError(null)
 
-    const inviterName = displayName ?? 'Someone'
-    const { error: sendError } = await sendInvites(
-      planId, planName, inviterName, emails,
-      planStart && planEnd ? { startDate: planStart, endDate: planEnd } : undefined
-    )
+    try {
+      const inviterName = displayName ?? 'Someone'
+      const { error: sendError } = await sendInvites(
+        planId, planName, inviterName, emails,
+        planStart && planEnd ? { startDate: planStart, endDate: planEnd } : undefined
+      )
 
-    setSending(false)
+      if (sendError) {
+        setError(sendError)
+        return
+      }
 
-    if (sendError) {
-      setError(sendError)
-      return
+      toast('Invites sent')
+      setSent(true)
+    } catch {
+      setError('Could not send invites — check your connection and try again.')
+    } finally {
+      setSending(false)
     }
-
-    toast('Invites sent')
-    setSent(true)
   }
 
   function handleDone() {
