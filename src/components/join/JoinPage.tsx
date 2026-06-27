@@ -1,29 +1,38 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { processInvite } from '../../lib/sync'
+import { processInvite, pullFromSupabase } from '../../lib/sync'
 import { useAuth } from '../../hooks/useAuth'
+import { usePlanStore } from '../../stores/planStore'
 import { AuthPage } from '../auth/AuthPage'
 
 export function JoinPage() {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const { user, loading } = useAuth()
+  const importState = usePlanStore((s) => s.importState)
   const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user || !token || status !== 'idle') return
     setStatus('processing')
-    processInvite(token, user.id).then(({ error }) => {
+    processInvite(token, user.id).then(async ({ planId, error }) => {
       if (error) {
         setErrorMsg(error)
         setStatus('error')
         return
       }
+      // Load the shared plan into the store immediately — don't wait for syncDown
+      try {
+        const remote = await pullFromSupabase(user.id, planId ?? undefined)
+        if (remote) importState(remote)
+      } catch {
+        // Best-effort; the plan will load on next auth sync if this fails
+      }
       setStatus('done')
       navigate('/plan', { replace: true })
     })
-  }, [user, token, status, navigate])
+  }, [user, token, status, navigate, importState])
 
   if (loading) {
     return (

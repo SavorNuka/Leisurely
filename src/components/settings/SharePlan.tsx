@@ -27,7 +27,9 @@ export function SharePlan() {
 
   function handleCopy() {
     const link = encodeShareLink(exportState())
-    navigator.clipboard.writeText(link).then(() => toast('Link copied!'))
+    navigator.clipboard.writeText(link)
+      .then(() => toast('Link copied!'))
+      .catch(() => toast('Could not copy — try selecting the URL manually', 'error'))
   }
 
   function handleToggle() {

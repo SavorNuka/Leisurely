@@ -1,5 +1,5 @@
 import { supabase, isConfigured } from './supabase'
-import type { AppState, GroceryItem, PackingCategory, PackingItem } from '../types'
+import type { AppState, Plan, GroceryItem, PackingCategory, PackingItem } from '../types'
 
 type RealtimeUnsub = () => void
 
@@ -185,37 +185,66 @@ export async function getCollaborators(
 // ── Pull Supabase → local state ───────────────────────────────────────────────
 
 export async function pullFromSupabase(
-  userId: string
+  userId: string,
+  planId?: string
 ): Promise<Partial<AppState & { packingList: PackingItem[] }> | null> {
   if (!isConfigured() || !supabase) return null
 
-  // Fetch plan first so its id is available for the plan-scoped notes query
-  const plansRes = await supabase
-    .from('plans')
-    .select('*')
-    .eq('user_id', userId)
-    .order('updated_at', { ascending: false })
-    .limit(1)
+  let planRow: Record<string, unknown>
 
-  if (plansRes.error || !plansRes.data?.length) return null
-  const planRow = plansRes.data[0]
+  if (planId) {
+    // Load a specific plan by ID — used immediately after accepting a collaborative invite
+    const res = await supabase.from('plans').select('*').eq('id', planId).single()
+    if (res.error || !res.data) return null
+    planRow = res.data as Record<string, unknown>
+  } else {
+    // Try owned plan first; fall back to most-recently-joined collaborative plan
+    const ownedRes = await supabase
+      .from('plans')
+      .select('*')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+
+    if (!ownedRes.error && ownedRes.data?.length) {
+      planRow = ownedRes.data[0] as Record<string, unknown>
+    } else {
+      const collabRes = await supabase
+        .from('plan_collaborators')
+        .select('plan_id')
+        .eq('user_id', userId)
+        .order('joined_at', { ascending: false })
+        .limit(1)
+
+      if (collabRes.error || !collabRes.data?.length) return null
+
+      const planFetch = await supabase
+        .from('plans')
+        .select('*')
+        .eq('id', collabRes.data[0].plan_id)
+        .single()
+
+      if (planFetch.error || !planFetch.data) return null
+      planRow = planFetch.data as Record<string, unknown>
+    }
+  }
 
   const [mealsRes, groceryRes, notesRes] = await Promise.all([
-    supabase.from('meals').select('*').eq('user_id', userId),
-    supabase.from('grocery_items').select('*').eq('user_id', userId),
-    // Pull all notes for this plan (not just own) so collaborators' posts are visible
-    supabase.from('notes').select('*').eq('plan_id', planRow.id).order('created_at', { ascending: false }),
+    supabase.from('meals').select('*').eq('plan_id', planRow.id as string),
+    supabase.from('grocery_items').select('*').eq('plan_id', planRow.id as string),
+    supabase.from('notes').select('*').eq('plan_id', planRow.id as string).order('created_at', { ascending: false }),
   ])
 
+  const pr = planRow as { id: string; name: string; start_date: string; end_date: string; is_public: boolean; days: Plan['days']; created_at: string; updated_at: string }
   const plan = {
-    id: planRow.id,
-    name: planRow.name,
-    startDate: planRow.start_date,
-    endDate: planRow.end_date,
-    isPublic: planRow.is_public,
-    days: planRow.days,
-    createdAt: planRow.created_at,
-    updatedAt: planRow.updated_at,
+    id: pr.id,
+    name: pr.name,
+    startDate: pr.start_date,
+    endDate: pr.end_date,
+    isPublic: pr.is_public,
+    days: pr.days,
+    createdAt: pr.created_at,
+    updatedAt: pr.updated_at,
   }
 
   const meals: AppState['meals'] = {}
@@ -265,7 +294,7 @@ export async function pullFromSupabase(
   const packingRes = await supabase
     .from('packing_items')
     .select('*')
-    .eq('user_id', userId)
+    .eq('plan_id', planRow.id as string)
     .order('created_at', { ascending: true })
 
   const packingList = (packingRes.data ?? []).map((r: {
