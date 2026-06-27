@@ -51,6 +51,11 @@ export async function pushPlan(
   return { error: null }
 }
 
+export async function deletePlan(planId: string): Promise<void> {
+  if (!isConfigured() || !supabase) return
+  await supabase.from('plans').delete().eq('id', planId)
+}
+
 export async function pushNotes(
   notes: AppState['notes'],
   userId: string,
