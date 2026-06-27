@@ -51,13 +51,21 @@ export function CollaboratorRoster() {
 
   async function handleRemoveCollab(userId: string) {
     if (!plan) return
-    await removeCollaborator(plan.id, userId)
-    setCollabs((prev) => prev.filter((c) => c.userId !== userId))
+    try {
+      await removeCollaborator(plan.id, userId)
+      setCollabs((prev) => prev.filter((c) => c.userId !== userId))
+    } catch {
+      // Silently ignore — collaborator remains visible until next reload
+    }
   }
 
   async function handleDeleteInvite(id: string) {
-    await deleteInvite(id)
-    setInvites((prev) => prev.filter((i) => i.id !== id))
+    try {
+      await deleteInvite(id)
+      setInvites((prev) => prev.filter((i) => i.id !== id))
+    } catch {
+      // Silently ignore
+    }
   }
 
   if (collabs.length === 0 && invites.length === 0) return null
@@ -72,7 +80,8 @@ export function CollaboratorRoster() {
 
         <div className="divide-y divide-olive/10">
           {collabs.map((c, idx) => {
-            const label = c.displayName ?? `Member ${idx + 1}`
+            const rawName = c.displayName?.trim()
+            const label = rawName || `Member ${idx + 1}`
             const isMe = c.userId === user.id
             const isOwner = c.role === 'owner'
             const hue = avatarHue(label)
@@ -88,7 +97,7 @@ export function CollaboratorRoster() {
                   <p className="text-sm text-olive truncate">
                     {label}{isMe ? ' (you)' : ''}
                   </p>
-                  {!c.displayName && !isMe && (
+                  {!rawName && !isMe && (
                     <p className="text-xs text-olive/35">Ask them to set a display name in Settings</p>
                   )}
                 </div>

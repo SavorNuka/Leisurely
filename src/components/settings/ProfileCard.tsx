@@ -12,7 +12,7 @@ export function ProfileCard() {
   if (!isConfigured || !user) return null
 
   async function saveName() {
-    if (!user || nameInput.trim() === displayName) return
+    if (!user || !nameInput.trim() || nameInput.trim() === displayName) return
     setSaving(true)
     try {
       await updateDisplayName(user.id, nameInput.trim())
