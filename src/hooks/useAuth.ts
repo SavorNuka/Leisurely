@@ -25,7 +25,18 @@ export function useAuth() {
     setSyncing(true)
     try {
       const remote = await pullFromSupabase(userId)
-      if (remote) importState(remote)
+      if (remote) {
+        const localPlan = usePlanStore.getState().plan
+        const localUpdated = localPlan?.updatedAt ?? null
+        const remoteUpdated = remote.plan?.updatedAt ?? null
+        // Only overwrite local state with remote data when remote is strictly
+        // newer. Equal timestamps mean nothing was pushed since our last pull,
+        // so importing would discard uncommitted local edits (e.g. a newly
+        // added meal that hasn't been pushed yet).
+        if (!localPlan || !localUpdated || !remoteUpdated || remoteUpdated > localUpdated) {
+          importState(remote)
+        }
+      }
       await fetchProfile(userId)
     } catch (e) {
       console.warn('Supabase sync failed', e)

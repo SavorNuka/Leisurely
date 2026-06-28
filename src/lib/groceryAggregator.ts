@@ -22,11 +22,12 @@ export function aggregateIngredients(
       if (!mealId || !meals[mealId]) continue
 
       const meal = meals[mealId]
+      const scale = (meal.scaleToServings ?? true) ? meal.servings : 1
       for (const ingredient of meal.ingredients) {
         const key = `${ingredient.name.toLowerCase()}|${ingredient.unit}`
         const existing = merged.get(key)
         if (existing) {
-          existing.quantity += ingredient.quantity * meal.servings
+          existing.quantity += ingredient.quantity * scale
           if (!existing.mealIds.includes(mealId)) {
             existing.mealIds.push(mealId)
           }
@@ -39,7 +40,7 @@ export function aggregateIngredients(
           merged.set(key, {
             id: ingredient.id,
             name: ingredient.name,
-            quantity: ingredient.quantity * meal.servings,
+            quantity: ingredient.quantity * scale,
             unit: ingredient.unit,
             checked: existingChecked.get(key) ?? false,
             mealIds: [mealId],

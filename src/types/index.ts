@@ -82,6 +82,7 @@ export interface Meal {
   name: string
   notes: string
   servings: number
+  scaleToServings?: boolean
   dietaryTags: DietaryTag[]
   ingredients: GroceryItem[]
   assignedTo?: string[]

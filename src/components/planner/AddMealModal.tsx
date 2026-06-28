@@ -52,6 +52,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
       ? editingMeal.ingredients.map((i) => ({ id: i.id, name: i.name, quantity: String(i.quantity), unit: i.unit }))
       : [emptyRow()]
   )
+  const [scaleToServings, setScaleToServings] = useState(editingMeal?.scaleToServings !== false)
   const [nameError, setNameError] = useState('')
 
   function addAssignee() {
@@ -120,7 +121,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
       }))
 
     if (editingMeal) {
-      updateMeal(editingMeal.id, { name: name.trim(), notes: notes.trim(), servings: parseInt(servings) || 1, dietaryTags: selectedTags, ingredients: parsedIngredients, assignedTo: assignedTo.length ? assignedTo : undefined })
+      updateMeal(editingMeal.id, { name: name.trim(), notes: notes.trim(), servings: parseInt(servings) || 1, scaleToServings, dietaryTags: selectedTags, ingredients: parsedIngredients, assignedTo: assignedTo.length ? assignedTo : undefined })
       regenerateGroceryList()
     } else {
       const meal: Meal = {
@@ -128,6 +129,7 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
         name: name.trim(),
         notes: notes.trim(),
         servings: parseInt(servings) || 1,
+        scaleToServings,
         dietaryTags: selectedTags,
         ingredients: parsedIngredients,
         assignedTo: assignedTo.length ? assignedTo : undefined,
@@ -165,7 +167,18 @@ export function AddMealModal({ open, onClose, date, slot, editingMeal }: AddMeal
 
         <Input id="meal-name" label="Meal name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Caprese salad" error={nameError} autoFocus={!!editingMeal} />
         <Textarea id="meal-notes" label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Prep notes, restaurant name, etc." rows={2} />
-        <Input id="meal-servings" label="Servings" type="number" min={1} max={50} value={servings} onChange={(e) => setServings(e.target.value)} />
+        <div className="space-y-1.5">
+          <Input id="meal-servings" label="Servings" type="number" min={1} max={50} value={servings} onChange={(e) => setServings(e.target.value)} />
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={scaleToServings}
+              onChange={(e) => setScaleToServings(e.target.checked)}
+              className="rounded border-olive/30 text-sage focus:ring-sage"
+            />
+            <span className="text-xs text-olive/70">Scale grocery quantities to serving count</span>
+          </label>
+        </div>
 
         {/* Who's responsible */}
         <div className="space-y-2">
