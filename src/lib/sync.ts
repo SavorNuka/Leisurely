@@ -12,7 +12,7 @@ export async function pushPlan(
   if (!isConfigured() || !supabase || !state.plan) return { error: null }
   const { plan, meals, groceryList } = state
 
-  // Only the plan owner can write the plan row — collaborators skip this and only push meals.
+  // Owner upserts the full plan row; collaborators update only slot assignments (days).
   const isOwner = !plan.ownerId || plan.ownerId === userId
   if (isOwner) {
     const { error: planError } = await supabase.from('plans').upsert({
@@ -27,6 +27,13 @@ export async function pushPlan(
       created_at: plan.createdAt,
     })
     if (planError) { console.error('plan upsert failed', planError); return { error: planError.message } }
+  } else {
+    // Collaborators can update days (slot assignments) via the plans_collab_update RLS policy.
+    const { error: daysError } = await supabase
+      .from('plans')
+      .update({ days: plan.days, updated_at: plan.updatedAt })
+      .eq('id', plan.id)
+    if (daysError) console.error('plan days update failed (collab)', daysError)
   }
 
   const mealRows = Object.values(meals).map((m) => ({

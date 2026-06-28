@@ -28,13 +28,17 @@ export function useAuth() {
       const remote = await pullFromSupabase(userId)
       if (remote) {
         const dirtyAt = localDirtyAt
+        const remoteMealCount = Object.keys(remote.meals ?? {}).length
         // Only import remote state when there are no uncommitted local edits.
         // resetDirtyAt() is called after a successful push, so the next syncDown
         // (triggered by Realtime from our own push) imports cleanly.
         // This prevents a Realtime event from a collaborator's push from wiping a
         // locally-added meal that is still within its 2-second push debounce window.
         if (!dirtyAt) {
+          console.debug('[syncDown] importing remote state', { remoteMealCount, planId: remote.plan?.id })
           importState(remote)
+        } else {
+          console.debug('[syncDown] guard blocked import (local edits pending)', { dirtyAt, remoteMealCount })
         }
       }
       await fetchProfile(userId)
@@ -116,9 +120,14 @@ export function useAuth() {
   async function pushNow() {
     if (!user) return
     const state = usePlanStore.getState().exportState()
+    const mealCount = Object.keys(state.meals).length
+    console.debug('[pushNow] pushing', { meals: mealCount, plan: state.plan?.id })
     const result = await pushPlan(state, user.id)
     if (result.error) console.error('[pushNow] pushPlan error:', result.error)
-    else resetDirtyAt()
+    else {
+      console.debug('[pushNow] push succeeded, resetting dirtyAt')
+      resetDirtyAt()
+    }
     await pushNotes(state.notes, user.id, state.plan?.id, displayName ?? undefined)
     if (state.plan) {
       await pushPackingList(state.packingList, state.plan.id, user.id)
