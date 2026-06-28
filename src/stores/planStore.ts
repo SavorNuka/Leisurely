@@ -317,6 +317,12 @@ function _markDirty() {
   if (!_suppressDirtyMark) localDirtyAt = new Date().toISOString()
 }
 
+// Called by pushNow after a successful push so that the next syncDown can
+// freely import remote state without the dirty guard blocking it.
+export function resetDirtyAt(): void {
+  localDirtyAt = null
+}
+
 function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number) {
   let timer: ReturnType<typeof setTimeout>
   return (...args: T) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isConfigured } from '../lib/supabase'
-import { usePlanStore, localDirtyAt } from '../stores/planStore'
+import { usePlanStore, localDirtyAt, resetDirtyAt } from '../stores/planStore'
 import { pullFromSupabase, pushPlan, pushNotes, pushPackingList, subscribeToRealtime } from '../lib/sync'
 
 export function useAuth() {
@@ -28,13 +28,12 @@ export function useAuth() {
       const remote = await pullFromSupabase(userId)
       if (remote) {
         const dirtyAt = localDirtyAt
-        const remoteUpdated = remote.plan?.updatedAt ?? null
-        // Only import remote state when there are no uncommitted local changes
-        // (localDirtyAt is null after every importState call), OR when the remote
-        // plan is strictly newer than our last local mutation (a collaborator pushed
-        // after we last edited). This prevents a navigating useAuth() mount from
-        // wiping a freshly-added meal that hasn't been pushed to Supabase yet.
-        if (!dirtyAt || (remoteUpdated && remoteUpdated > dirtyAt)) {
+        // Only import remote state when there are no uncommitted local edits.
+        // resetDirtyAt() is called after a successful push, so the next syncDown
+        // (triggered by Realtime from our own push) imports cleanly.
+        // This prevents a Realtime event from a collaborator's push from wiping a
+        // locally-added meal that is still within its 2-second push debounce window.
+        if (!dirtyAt) {
           importState(remote)
         }
       }
@@ -117,9 +116,9 @@ export function useAuth() {
   async function pushNow() {
     if (!user) return
     const state = usePlanStore.getState().exportState()
-    console.log('[pushNow] meals:', Object.values(state.meals ?? {}).length, 'plan:', state.plan?.id)
     const result = await pushPlan(state, user.id)
     if (result.error) console.error('[pushNow] pushPlan error:', result.error)
+    else resetDirtyAt()
     await pushNotes(state.notes, user.id, state.plan?.id, displayName ?? undefined)
     if (state.plan) {
       await pushPackingList(state.packingList, state.plan.id, user.id)
