@@ -23,7 +23,7 @@ export async function pushPlan(
     updated_at: plan.updatedAt,
     created_at: plan.createdAt,
   })
-  if (planError) return { error: planError.message }
+  if (planError) { console.error('plan upsert failed', planError); return { error: planError.message } }
 
   const mealRows = Object.values(meals).map((m) => ({
     id: m.id,

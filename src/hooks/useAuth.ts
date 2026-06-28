@@ -117,7 +117,9 @@ export function useAuth() {
   async function pushNow() {
     if (!user) return
     const state = usePlanStore.getState().exportState()
-    await pushPlan(state, user.id)
+    console.log('[pushNow] meals:', Object.values(state.meals ?? {}).length, 'plan:', state.plan?.id)
+    const result = await pushPlan(state, user.id)
+    if (result.error) console.error('[pushNow] pushPlan error:', result.error)
     await pushNotes(state.notes, user.id, state.plan?.id, displayName ?? undefined)
     if (state.plan) {
       await pushPackingList(state.packingList, state.plan.id, user.id)
