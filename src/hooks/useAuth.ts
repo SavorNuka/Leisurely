@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js'
 import { supabase, isConfigured } from '../lib/supabase'
 import { usePlanStore } from '../stores/planStore'
 import { pullFromSupabase, pushPlan, pushNotes, pushPackingList, subscribeToRealtime } from '../lib/sync'
+import { localDirtyAt } from '../stores/planStore'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -26,14 +27,14 @@ export function useAuth() {
     try {
       const remote = await pullFromSupabase(userId)
       if (remote) {
-        const localPlan = usePlanStore.getState().plan
-        const localUpdated = localPlan?.updatedAt ?? null
+        const dirtyAt = localDirtyAt
         const remoteUpdated = remote.plan?.updatedAt ?? null
-        // Only overwrite local state with remote data when remote is strictly
-        // newer. Equal timestamps mean nothing was pushed since our last pull,
-        // so importing would discard uncommitted local edits (e.g. a newly
-        // added meal that hasn't been pushed yet).
-        if (!localPlan || !localUpdated || !remoteUpdated || remoteUpdated > localUpdated) {
+        // Only import remote state when there are no uncommitted local changes
+        // (localDirtyAt is null after every importState call), OR when the remote
+        // plan is strictly newer than our last local mutation (a collaborator pushed
+        // after we last edited). This prevents a navigating useAuth() mount from
+        // wiping a freshly-added meal that hasn't been pushed to Supabase yet.
+        if (!dirtyAt || (remoteUpdated && remoteUpdated > dirtyAt)) {
           importState(remote)
         }
       }

@@ -288,6 +288,7 @@ export const usePlanStore = create<PlanStore>()(
       const plan = state.plan
         ? { ...state.plan, days: state.plan.days ?? [] }
         : null
+      _suppressDirtyMark = true
       set({
         plan,
         meals: state.meals ?? {},
@@ -295,6 +296,8 @@ export const usePlanStore = create<PlanStore>()(
         notes: (state.notes ?? []).map((n) => ({ ...n, likes: n.likes ?? 0, replies: n.replies ?? [] })),
         packingList: state.packingList ?? [],
       })
+      _suppressDirtyMark = false
+      localDirtyAt = null
     },
 
     exportState() {
@@ -304,6 +307,16 @@ export const usePlanStore = create<PlanStore>()(
   }))
 )
 
+// Tracks the most recent local mutation time. Set on any user-driven change,
+// cleared by importState so syncDown knows whether local state has uncommitted
+// edits that should not be overwritten by a stale remote pull.
+export let localDirtyAt: string | null = null
+let _suppressDirtyMark = false
+
+function _markDirty() {
+  if (!_suppressDirtyMark) localDirtyAt = new Date().toISOString()
+}
+
 function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number) {
   let timer: ReturnType<typeof setTimeout>
   return (...args: T) => {
@@ -311,6 +324,12 @@ function debounce<T extends unknown[]>(fn: (...args: T) => void, ms: number) {
     timer = setTimeout(() => fn(...args), ms)
   }
 }
+
+usePlanStore.subscribe((s) => s.plan, _markDirty)
+usePlanStore.subscribe((s) => s.meals, _markDirty)
+usePlanStore.subscribe((s) => s.groceryList, _markDirty)
+usePlanStore.subscribe((s) => s.notes, _markDirty)
+usePlanStore.subscribe((s) => s.packingList, _markDirty)
 
 usePlanStore.subscribe((s) => s.plan, debounce((plan: Plan | null) => { if (plan) savePlan(plan); else clearPlanFromDB() }, 500))
 usePlanStore.subscribe((s) => s.meals, debounce((meals: Record<string, Meal>) => saveMeals(meals), 500))
