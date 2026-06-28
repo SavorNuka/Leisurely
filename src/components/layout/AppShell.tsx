@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Header } from './Header'
@@ -7,10 +7,11 @@ import { ShareImportBanner } from '../ui/ShareImportBanner'
 import { ToastStack } from '../ui/ToastStack'
 import { TourProvider, useTour } from '../tour/TourProvider'
 import { useAuth } from '../../hooks/useAuth'
+import { usePlanStore } from '../../stores/planStore'
 
 function ShellInner({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, pushNow } = useAuth()
   const { startTour } = useTour()
 
   useEffect(() => {
@@ -21,6 +22,30 @@ function ShellInner({ children }: { children: ReactNode }) {
       return () => clearTimeout(timer)
     }
   }, [user, startTour])
+
+  // Keep a ref so the timer callback always calls the latest pushNow without
+  // needing it in the effect deps (which would restart the subscription on
+  // every render since pushNow isn't memoized).
+  const pushNowRef = useRef(pushNow)
+  useEffect(() => { pushNowRef.current = pushNow })
+
+  // Auto-push plan and meals to Supabase 2 s after any local change so
+  // collaborators can pull the latest state via their syncDown.
+  useEffect(() => {
+    if (!user) return
+    let timer: ReturnType<typeof setTimeout> | null = null
+    function schedule() {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => { timer = null; pushNowRef.current() }, 2000)
+    }
+    const unsubMeals = usePlanStore.subscribe((s) => s.meals, schedule)
+    const unsubPlan  = usePlanStore.subscribe((s) => s.plan,  schedule)
+    return () => {
+      unsubMeals()
+      unsubPlan()
+      if (timer) clearTimeout(timer)
+    }
+  }, [user])
 
   return (
     <div className="flex flex-col min-h-screen">
