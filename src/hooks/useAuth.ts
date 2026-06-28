@@ -118,24 +118,31 @@ export function useAuth() {
   }
 
   const lastPushAt = useRef(0)
+  const retryPushTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   async function pushNow() {
     if (!user) return
     const now = Date.now()
-    if (now - lastPushAt.current < 10_000) return
+    const remaining = 10_000 - (now - lastPushAt.current)
+    if (remaining > 0) {
+      if (!retryPushTimer.current) {
+        retryPushTimer.current = setTimeout(() => { retryPushTimer.current = null; pushNow() }, remaining + 50)
+      }
+      return
+    }
     lastPushAt.current = now
     const state = usePlanStore.getState().exportState()
     const mealCount = Object.keys(state.meals).length
     console.debug('[pushNow] pushing', { meals: mealCount, plan: state.plan?.id })
     const result = await pushPlan(state, user.id)
     if (result.error) console.error('[pushNow] pushPlan error:', result.error)
-    else {
-      console.debug('[pushNow] push succeeded, resetting dirtyAt')
-      resetDirtyAt()
-    }
     await pushNotes(state.notes, user.id, state.plan?.id, displayName ?? undefined)
     if (state.plan) {
       await pushPackingList(state.packingList, state.plan.id, user.id)
+    }
+    if (!result.error) {
+      console.debug('[pushNow] push succeeded, resetting dirtyAt')
+      resetDirtyAt()
     }
   }
 

@@ -3,7 +3,7 @@ import type { AppState, Plan, GroceryItem, PackingCategory, PackingItem } from '
 
 type RealtimeUnsub = () => void
 
-// ── Push local state → Supabase ───────────────────────────────────────────────
+// ── Push local state → Supabase ─────────────────────────────────────────────
 
 export async function pushPlan(
   state: AppState,
@@ -80,29 +80,31 @@ export async function pushNotes(
   // Only push notes authored by the current user to avoid RLS rejections
   const ownNotes = notes.filter((n) => !n.authorId || n.authorId === userId)
 
-  // Scoped delete: only remove own notes in this plan to preserve other users' notes
-  const deleteQuery = supabase.from('notes').delete().eq('user_id', userId)
-  if (planId) {
-    await deleteQuery.eq('plan_id', planId)
-  } else {
-    await deleteQuery
+  if (ownNotes.length > 0) {
+    const rows = ownNotes.map((n) => ({
+      id: n.id,
+      user_id: userId,
+      plan_id: planId ?? null,
+      text: n.text,
+      created_at: n.createdAt,
+      author_name: n.authorName ?? displayName ?? null,
+    }))
+    await supabase.from('notes').upsert(rows, { onConflict: 'id' })
   }
 
-  const rows = ownNotes.map((n) => ({
-    id: n.id,
-    user_id: userId,
-    plan_id: planId ?? null,
-    text: n.text,
-    created_at: n.createdAt,
-    author_name: n.authorName ?? displayName ?? null,
-  }))
-  if (rows.length > 0) {
-    await supabase.from('notes').insert(rows)
+  // Deleted notes: remove rows that are no longer in local state
+  if (planId) {
+    const keepIds = ownNotes.map((n) => n.id)
+    const deleteQuery = supabase.from('notes').delete().eq('user_id', userId).eq('plan_id', planId)
+    if (keepIds.length > 0) {
+      await deleteQuery.not('id', 'in', `(${keepIds.join(',')})`)
+    } else {
+      await deleteQuery
+    }
   }
 
   const ownNoteIds = ownNotes.map((n) => n.id)
   if (ownNoteIds.length > 0) {
-    await supabase.from('note_replies').delete().in('note_id', ownNoteIds)
     const replyRows = ownNotes.flatMap((n) =>
       (n.replies ?? [])
         .filter((r) => !r.authorId || r.authorId === userId)
@@ -116,7 +118,15 @@ export async function pushNotes(
         }))
     )
     if (replyRows.length > 0) {
-      await supabase.from('note_replies').insert(replyRows)
+      await supabase.from('note_replies').upsert(replyRows, { onConflict: 'id' })
+    }
+    // Remove replies that are no longer in local state
+    const keepReplyIds = replyRows.map((r) => r.id)
+    const deleteRepliesQuery = supabase.from('note_replies').delete().in('note_id', ownNoteIds)
+    if (keepReplyIds.length > 0) {
+      await deleteRepliesQuery.not('id', 'in', `(${keepReplyIds.join(',')})`)
+    } else {
+      await deleteRepliesQuery
     }
   }
 }
@@ -142,7 +152,7 @@ export async function pushPackingList(
   }
 }
 
-// ── Note likes ────────────────────────────────────────────────────────────────
+// ── Note likes ──────────────────────────────────────────────────────────────────
 
 export async function toggleNoteLike(
   noteId: string,
@@ -157,7 +167,7 @@ export async function toggleNoteLike(
   }
 }
 
-// ── Plan collaboration ────────────────────────────────────────────────────────
+// ── Plan collaboration ──────────────────────────────────────────────────────
 
 export async function addCollaborator(
   planId: string,
@@ -195,7 +205,7 @@ export async function getCollaborators(
   }))
 }
 
-// ── Pull Supabase → local state ───────────────────────────────────────────────
+// ── Pull Supabase → local state ────────────────────────────────────────────────
 
 export async function pullFromSupabase(
   userId: string,
@@ -324,7 +334,7 @@ export async function pullFromSupabase(
   return { plan, meals, groceryList, notes, packingList }
 }
 
-// ── Invites ───────────────────────────────────────────────────────────────────
+// ── Invites ────────────────────────────────────────────────────────────────────────
 
 export async function sendInvites(
   planId: string,
@@ -381,7 +391,7 @@ export async function processInvite(
   return { planId: invite.plan_id, error: null }
 }
 
-// ── Realtime subscriptions ────────────────────────────────────────────────────
+// ── Realtime subscriptions ──────────────────────────────────────────────────────────
 
 export function subscribeToRealtime(
   planId: string,
@@ -411,7 +421,7 @@ export function subscribeToRealtime(
   return () => { supabase?.removeChannel(channel) }
 }
 
-// ── Collaborator roster with profiles ────────────────────────────────────────
+// ── Collaborator roster with profiles ─────────────────────────────────────────
 
 export async function getCollaboratorsWithProfiles(
   planId: string

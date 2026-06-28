@@ -29,8 +29,8 @@ function ShellInner({ children }: { children: ReactNode }) {
   const pushNowRef = useRef(pushNow)
   useEffect(() => { pushNowRef.current = pushNow })
 
-  // Auto-push plan and meals to Supabase 2 s after any local change so
-  // collaborators can pull the latest state via their syncDown.
+  // Auto-push plan, meals, and notes to Supabase 2 s after any local change
+  // so collaborators can pull the latest state via their syncDown.
   useEffect(() => {
     if (!user) return
     let timer: ReturnType<typeof setTimeout> | null = null
@@ -41,9 +41,11 @@ function ShellInner({ children }: { children: ReactNode }) {
     }
     const unsubMeals = usePlanStore.subscribe((s) => s.meals, schedule)
     const unsubPlan  = usePlanStore.subscribe((s) => s.plan,  schedule)
+    const unsubNotes = usePlanStore.subscribe((s) => s.notes, schedule)
     return () => {
       unsubMeals()
       unsubPlan()
+      unsubNotes()
       if (timer) clearTimeout(timer)
     }
   }, [user])
