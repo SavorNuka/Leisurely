@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isConfigured } from '../lib/supabase'
 import { usePlanStore, localDirtyAt, resetDirtyAt } from '../stores/planStore'
@@ -117,8 +117,13 @@ export function useAuth() {
     setDisplayName(null)
   }
 
+  const lastPushAt = useRef(0)
+
   async function pushNow() {
     if (!user) return
+    const now = Date.now()
+    if (now - lastPushAt.current < 10_000) return
+    lastPushAt.current = now
     const state = usePlanStore.getState().exportState()
     const mealCount = Object.keys(state.meals).length
     console.debug('[pushNow] pushing', { meals: mealCount, plan: state.plan?.id })
