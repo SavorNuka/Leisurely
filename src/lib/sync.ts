@@ -40,7 +40,7 @@ export async function pushPlan(
 
   await supabase.from('grocery_items').delete().eq('plan_id', plan.id)
   const groceryRows = groceryList.map((g) => ({
-    id: g.id,
+    id: crypto.randomUUID(),
     plan_id: plan.id,
     user_id: userId,
     data: g,
