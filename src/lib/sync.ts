@@ -34,7 +34,8 @@ export async function pushPlan(
     created_at: m.createdAt,
   }))
   if (mealRows.length > 0) {
-    await supabase.from('meals').upsert(mealRows)
+    const { error: mealError } = await supabase.from('meals').upsert(mealRows)
+    if (mealError) { console.error('meal upsert failed', mealError); return { error: mealError.message } }
   }
 
   await supabase.from('grocery_items').delete().eq('plan_id', plan.id)
@@ -45,7 +46,8 @@ export async function pushPlan(
     data: g,
   }))
   if (groceryRows.length > 0) {
-    await supabase.from('grocery_items').insert(groceryRows)
+    const { error: groceryError } = await supabase.from('grocery_items').insert(groceryRows)
+    if (groceryError) console.error('grocery insert failed', groceryError)
   }
 
   return { error: null }
