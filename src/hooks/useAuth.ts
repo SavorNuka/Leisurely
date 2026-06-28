@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase, isConfigured } from '../lib/supabase'
-import { usePlanStore } from '../stores/planStore'
+import { usePlanStore, localDirtyAt } from '../stores/planStore'
 import { pullFromSupabase, pushPlan, pushNotes, pushPackingList, subscribeToRealtime } from '../lib/sync'
-import { localDirtyAt } from '../stores/planStore'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -11,6 +10,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const importState = usePlanStore((s) => s.importState)
+  const planId = usePlanStore((s) => s.plan?.id ?? null)
 
   const fetchProfile = useCallback(async (userId: string) => {
     if (!supabase) return
@@ -69,14 +69,14 @@ export function useAuth() {
     return () => subscription.unsubscribe()
   }, [syncDown])
 
-  // Real-time: re-pull on remote changes
+  // Real-time: re-pull on remote changes.
+  // planId is a reactive Zustand selector so this effect re-runs once the plan
+  // loads (which happens asynchronously after syncDown completes).
   useEffect(() => {
-    if (!user || !isConfigured()) return
-    const plan = usePlanStore.getState().plan
-    if (!plan) return
+    if (!user || !isConfigured() || !planId) return
 
     const unsub = subscribeToRealtime(
-      plan.id,
+      planId,
       user.id,
       () => syncDown(user.id),
       () => syncDown(user.id),
@@ -84,7 +84,7 @@ export function useAuth() {
       () => syncDown(user.id),
     )
     return unsub
-  }, [user, syncDown])
+  }, [user, syncDown, planId])
 
   async function signIn(email: string, password: string) {
     if (!supabase) throw new Error('Supabase not configured — add credentials to .env.local')
