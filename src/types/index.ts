@@ -101,6 +101,7 @@ export interface DayPlan {
 
 export interface Plan {
   id: string
+  ownerId?: string
   name: string
   startDate: string
   endDate: string
