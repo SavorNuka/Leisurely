@@ -288,6 +288,7 @@ export const usePlanStore = create<PlanStore>()(
       const plan = state.plan
         ? { ...state.plan, days: state.plan.days ?? [] }
         : null
+      isImporting = true
       _suppressDirtyMark = true
       set({
         plan,
@@ -298,6 +299,7 @@ export const usePlanStore = create<PlanStore>()(
       })
       _suppressDirtyMark = false
       localDirtyAt = null
+      isImporting = false
     },
 
     exportState() {
@@ -311,6 +313,9 @@ export const usePlanStore = create<PlanStore>()(
 // cleared by importState so syncDown knows whether local state has uncommitted
 // edits that should not be overwritten by a stale remote pull.
 export let localDirtyAt: string | null = null
+// True while importState is running so AppShell's auto-push subscriber can
+// skip scheduling a push for state changes driven by a remote sync.
+export let isImporting = false
 let _suppressDirtyMark = false
 
 function _markDirty() {

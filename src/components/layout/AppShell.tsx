@@ -7,7 +7,7 @@ import { ShareImportBanner } from '../ui/ShareImportBanner'
 import { ToastStack } from '../ui/ToastStack'
 import { TourProvider, useTour } from '../tour/TourProvider'
 import { useAuth } from '../../hooks/useAuth'
-import { usePlanStore } from '../../stores/planStore'
+import { usePlanStore, isImporting } from '../../stores/planStore'
 
 function ShellInner({ children }: { children: ReactNode }) {
   const location = useLocation()
@@ -35,6 +35,7 @@ function ShellInner({ children }: { children: ReactNode }) {
     if (!user) return
     let timer: ReturnType<typeof setTimeout> | null = null
     function schedule() {
+      if (isImporting) return
       if (timer) clearTimeout(timer)
       timer = setTimeout(() => { timer = null; pushNowRef.current() }, 2000)
     }
