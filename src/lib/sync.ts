@@ -12,18 +12,29 @@ export async function pushPlan(
   if (!isConfigured() || !supabase || !state.plan) return { error: null }
   const { plan, meals, groceryList } = state
 
-  const { error: planError } = await supabase.from('plans').upsert({
-    id: plan.id,
-    user_id: userId,
-    name: plan.name,
-    start_date: plan.startDate,
-    end_date: plan.endDate,
-    is_public: plan.isPublic,
-    days: plan.days,
-    updated_at: plan.updatedAt,
-    created_at: plan.createdAt,
-  })
-  if (planError) return { error: planError.message }
+  // Owner upserts the full plan row; collaborators update only slot assignments (days).
+  const isOwner = !plan.ownerId || plan.ownerId === userId
+  if (isOwner) {
+    const { error: planError } = await supabase.from('plans').upsert({
+      id: plan.id,
+      user_id: userId,
+      name: plan.name,
+      start_date: plan.startDate,
+      end_date: plan.endDate,
+      is_public: plan.isPublic,
+      days: plan.days,
+      updated_at: plan.updatedAt,
+      created_at: plan.createdAt,
+    })
+    if (planError) { console.error('plan upsert failed', planError); return { error: planError.message } }
+  } else {
+    // Collaborators can update days (slot assignments) via the plans_collab_update RLS policy.
+    const { error: daysError } = await supabase
+      .from('plans')
+      .update({ days: plan.days, updated_at: plan.updatedAt })
+      .eq('id', plan.id)
+    if (daysError) console.error('plan days update failed (collab)', daysError)
+  }
 
   const mealRows = Object.values(meals).map((m) => ({
     id: m.id,
@@ -40,7 +51,7 @@ export async function pushPlan(
 
   await supabase.from('grocery_items').delete().eq('plan_id', plan.id)
   const groceryRows = groceryList.map((g) => ({
-    id: g.id,
+    id: crypto.randomUUID(),
     plan_id: plan.id,
     user_id: userId,
     data: g,
@@ -237,9 +248,10 @@ export async function pullFromSupabase(
     supabase.from('notes').select('*').eq('plan_id', planRow.id as string).order('created_at', { ascending: false }),
   ])
 
-  const pr = planRow as { id: string; name: string; start_date: string; end_date: string; is_public: boolean; days: Plan['days']; created_at: string; updated_at: string }
+  const pr = planRow as { id: string; user_id: string; name: string; start_date: string; end_date: string; is_public: boolean; days: Plan['days']; created_at: string; updated_at: string }
   const plan = {
     id: pr.id,
+    ownerId: pr.user_id,
     name: pr.name,
     startDate: pr.start_date,
     endDate: pr.end_date,
