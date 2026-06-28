@@ -78,7 +78,7 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
       )}
 
       {!compact && (
-        <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           <button
             type="button"
             onClick={() => changeServings(-1)}
@@ -101,6 +101,17 @@ export function MealCard({ meal, onEdit, onClear, compact = false }: MealCardPro
             <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
               <line x1="5" y1="2" x2="5" y2="8"/><line x1="2" y1="5" x2="8" y2="5"/>
             </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              updateMeal(meal.id, { scaleToServings: !(meal.scaleToServings ?? true) })
+              regenerateGroceryList()
+            }}
+            aria-label={(meal.scaleToServings ?? true) ? 'Quantities scale with servings — click to fix' : 'Quantities are fixed — click to scale with servings'}
+            className="text-[10px] text-ink-400/50 hover:text-ink-400 underline underline-offset-2 transition-colors ml-auto shrink-0"
+          >
+            {(meal.scaleToServings ?? true) ? 'qty×' : 'qty fixed'}
           </button>
         </div>
       )}
