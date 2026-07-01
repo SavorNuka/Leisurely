@@ -50,7 +50,7 @@ interface PlanStore extends AppState {
   addPackingItem: (text: string, category: PackingCategory) => void
   togglePackingItem: (id: string) => void
   removePackingItem: (id: string) => void
-  clearPackedItems: () => void
+  clearPackedItems: (userId?: string) => void
   updatePackingItemAssignment: (id: string, assignedTo: string[]) => void
 
   // Import/export
@@ -272,8 +272,14 @@ export const usePlanStore = create<PlanStore>()(
       set((s) => ({ packingList: s.packingList.filter((item) => item.id !== id) }))
     },
 
-    clearPackedItems() {
-      set((s) => ({ packingList: s.packingList.filter((item) => !item.packed) }))
+    clearPackedItems(userId) {
+      set((s) => ({
+        packingList: s.packingList.filter((item) => {
+          if (!item.packed) return true
+          if (!userId) return false
+          return item.userId !== userId
+        }),
+      }))
     },
 
     updatePackingItemAssignment(id, assignedTo) {
@@ -288,6 +294,7 @@ export const usePlanStore = create<PlanStore>()(
       const plan = state.plan
         ? { ...state.plan, days: state.plan.days ?? [] }
         : null
+      isImporting = true
       _suppressDirtyMark = true
       set({
         plan,
@@ -298,6 +305,7 @@ export const usePlanStore = create<PlanStore>()(
       })
       _suppressDirtyMark = false
       localDirtyAt = null
+      isImporting = false
     },
 
     exportState() {
@@ -311,6 +319,9 @@ export const usePlanStore = create<PlanStore>()(
 // cleared by importState so syncDown knows whether local state has uncommitted
 // edits that should not be overwritten by a stale remote pull.
 export let localDirtyAt: string | null = null
+// True while importState is running so AppShell's auto-push subscriber can
+// skip scheduling a push for state changes driven by a remote sync.
+export let isImporting = false
 let _suppressDirtyMark = false
 
 function _markDirty() {
